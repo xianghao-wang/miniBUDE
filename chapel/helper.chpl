@@ -11,7 +11,7 @@ module Helper {
       return x;
     }
 
-    proc getIOChannel(parent: string, child: string, mode: iomode, ref length: int): file.reader {
+    proc openFile(parent: string, child: string, mode: iomode, ref length: int): file {
       const name = parent + child;
       const aFile: file;
 
