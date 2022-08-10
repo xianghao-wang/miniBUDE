@@ -1,16 +1,4 @@
-record Atom {
-  var x: real;
-  var y: real;
-  var z: real;
-  var aType: int;
-}
-
-record FFParams {
-  var hbtype: int;
-  var radius: real;
-  var hphb: real;
-  var elsc: real;
-}
+use Config;
 
 record ParameterConfig {
   const natlig: int;
