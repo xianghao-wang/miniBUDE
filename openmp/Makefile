@@ -42,7 +42,7 @@ CC_ARM     = armclang
 CC_CLANG   = clang
 CC_CRAY    = cc
 CC_FUJITSU = fcc
-CC_GNU     = gcc-11
+CC_GNU     ?= gcc
 CC_INTEL   = icc
 CC = $(CC_$(COMPILER))
 
