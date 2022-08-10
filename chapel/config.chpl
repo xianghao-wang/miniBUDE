@@ -11,16 +11,14 @@ module Config {
         FILE_REF_ENERGIES = "/ref_energies.out";
 
   record FFParams {
-    var hbtype: int;
-    var radius: real;
-    var hphb: real;
-    var elsc: real;
+    var hbtype: int(32);
+    var radius: real(32);
+    var hphb: real(32);
+    var elsc: real(32);
   }
 
   record Atom {
-    var x: real;
-    var y: real;
-    var z: real;
-    var aType: int;
+    var x, y, z: real(32);
+    var aType: int(32);
   }
 }
