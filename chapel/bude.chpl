@@ -1,4 +1,5 @@
 use Config;
+use Helper;
 
 record ParameterConfig {
   var natlig: int;
@@ -55,23 +56,13 @@ record ParameterConfig {
   }
 
   // TODO: read file
+  // 1. parse C-struct data
+  // 2. call C functions
 }
 
 var params : ParameterConfig;
 
-// Read command line arguments
-
 proc main(args: [] string) {
   params.loadParameters(args);
   writeln(params);
-}
-
-proc parseInt(ref x: int, s: string): int {
-  try {
-    x = s: int;
-  } catch {
-    return -1;
-  }
-
-  return x;
 }
