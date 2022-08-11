@@ -8,17 +8,7 @@ module Config {
         FILE_PROTEIN = "/protein.in",
         FILE_FORCEFIELD = "/forcefield.in",
         FILE_POSES = "/poses.in",
-        FILE_REF_ENERGIES = "/ref_energies.out";
-
-  record FFParams {
-    var hbtype: int(32);
-    var radius: real(32);
-    var hphb: real(32);
-    var elsc: real(32);
-  }
-
-  record Atom {
-    var x, y, z: real(32);
-    var aType: int(32);
-  }
+        FILE_REF_ENERGIES = "/ref_energies.out",
+        ATOM_SIZE = 4 * 32,
+        FFPARAMS_SIZE = 4 * 32;
 }
