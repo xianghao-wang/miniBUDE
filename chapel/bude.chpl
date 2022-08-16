@@ -5,5 +5,7 @@ module Bude {
 
     proc main(args: [] string) {
         params = new context(args);
+        params.load();
+        writeln(params);
     }
 }

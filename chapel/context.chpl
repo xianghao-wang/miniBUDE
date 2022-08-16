@@ -3,28 +3,27 @@ module Context {
   use Helper;
   use Atom;
   use FFParams;
+  use IO;
+  use FileSystem;
 
   record context {
     var iterations: int = DEFAULT_ITERS;
     var nposes: int = DEFAULT_NPOSES;
     var deckDir: string;
 
-    var natlig: int;
-    var natpro: int;
-    var ntypes: int;
-
     // Domains for arrays
-    var proteinDom: domain(1);
+    var natlig: int;
     var ligandDom: domain(1);
+    var natpro: int;
+    var proteinDom: domain(1);
+    var ntypes: int;
     var forcefieldDom: domain(1);
     var posesDom: domain(2);
     
-    var protein: [proteinDom] atom;
     var ligand: [ligandDom] atom;
+    var protein: [proteinDom] atom;
     var forcefield: [forcefieldDom] ffParams;
     var poses: [posesDom] real;
-    
-    
 
     proc init() {
       
@@ -66,7 +65,7 @@ module Context {
             writeln("Invalid deck");
             exit(1);
           }
-          t_deckDir = arg;
+          t_deckDir = args[i + 1];
           i += 1;
         } else {
           writeln("Unrecognized argument '", arg, "' (try '--help')\n");
@@ -76,6 +75,40 @@ module Context {
       }
 
       this.deckDir = t_deckDir;
+      var length: int;
+      var aFile: file;
+
+      /* init ligand array */
+      aFile = openFile(this.deckDir, FILE_LIGAND, iomode.r, length);
+      this.natlig = length / ATOM_SIZE;
+      this.ligandDom = {0..(this.natlig-1)};
+
+      /* init protein array */
+      aFile = openFile(this.deckDir, FILE_PROTEIN, iomode.r, length);
+      this.natpro = length / ATOM_SIZE;
+      this.proteinDom = {0..(this.natpro-1)};
+
+      /* init forcefield array */
+      aFile = openFile(this.deckDir, FILE_FORCEFIELD, iomode.r, length); 
+      this.ntypes = length / FFPARAMS_SIZE;
+      this.forcefieldDom = {0..(this.ntypes-1)};
+    }
+
+    proc load() {
+      var length: int;
+      var aFile: file;
+      
+      /* load ligand */
+      aFile = openFile(this.deckDir, FILE_LIGAND, iomode.r, length);
+      loadData(aFile, this.ligand, ATOM_SIZE);
+
+      /* load protein */
+      aFile = openFile(this.deckDir, FILE_PROTEIN, iomode.r, length);
+      loadData(aFile, this.protein, ATOM_SIZE);
+
+      /* load forcefields */
+      aFile = openFile(this.deckDir, FILE_FORCEFIELD, iomode.r, length);
+      loadData(aFile, this.forcefield, FFPARAMS_SIZE);
     }
   }
 }
