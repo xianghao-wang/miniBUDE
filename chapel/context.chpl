@@ -92,6 +92,12 @@ module Context {
       aFile = openFile(this.deckDir, FILE_FORCEFIELD, iomode.r, length); 
       this.ntypes = length / FFPARAMS_SIZE;
       this.forcefieldDom = {0..(this.ntypes-1)};
+
+      /* init poses array */
+      this.posesDom = {
+        0..5,
+        (0..this.nposes-1)
+      };
     }
 
     proc load() {
