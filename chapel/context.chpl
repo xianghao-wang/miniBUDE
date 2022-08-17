@@ -9,7 +9,7 @@ module Context {
   record context {
     var iterations: int = DEFAULT_ITERS;
     var nposes: int = DEFAULT_NPOSES;
-    var deckDir: string;
+    var deckDir: string = DATA_DIR;
 
     // Domains for arrays
     var natlig: int;
@@ -23,7 +23,7 @@ module Context {
     var ligand: [ligandDom] atom;
     var protein: [proteinDom] atom;
     var forcefield: [forcefieldDom] ffParams;
-    var poses: [posesDom] real;
+    var poses: [posesDom] real(32);
 
     proc init() {
       
@@ -115,6 +115,28 @@ module Context {
       /* load forcefields */
       aFile = openFile(this.deckDir, FILE_FORCEFIELD, iomode.r, length);
       loadData(aFile, this.forcefield, FFPARAMS_SIZE);
+
+      /* load poses */
+      aFile = openFile(this.deckDir, FILE_POSES, iomode.r, length);
+      var available = length / (6 * 4);
+      var cur_poses = 0, fetch, address = 0;
+      while (cur_poses < this.nposes) {
+        fetch = this.nposes - cur_poses;
+        if (fetch > available) {
+          fetch = available;
+        }
+        address = 0;
+        for i in 0..5 {
+          address += i * available * 4;
+          for j in 0..(fetch-1) {
+            loadDataPiecie(aFile, this.poses(i, cur_poses+j), address+4*j, 4);
+          }
+        }
+        address = 0; // rewind
+        cur_poses += fetch;
+      }
+
+      this.nposes = cur_poses;
     }
   }
 }
