@@ -125,14 +125,14 @@ module Context {
         if (fetch > available) {
           fetch = available;
         }
-        address = 0;
+        address = 0; // rewind
         for i in 0..5 {
-          address += i * available * 4;
+          address = i * available * 4;
           for j in 0..(fetch-1) {
-            loadDataPiecie(aFile, this.poses(i, cur_poses+j), address+4*j, 4);
+            loadDataPiecie(aFile, this.poses(i, cur_poses+j), address, 4);
+            address += 4;
           }
         }
-        address = 0; // rewind
         cur_poses += fetch;
       }
 
