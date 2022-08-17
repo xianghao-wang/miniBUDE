@@ -33,8 +33,23 @@ module Helper {
         r.read(A[i]);
         r.close();
       } catch {
+        // TODO: fix error
+        // stderr.writeln("Failed to read '", aFile.path, "'");
         exit(0);
       }
+    }
+  }
+
+  /* Load data piece */
+  proc loadDataPiecie(aFile: file, ref A: ?t, base: int, offset: int) {
+    try {
+      var r = aFile.reader(kind=iokind.native, start=base, end=base+offset);
+      r.read(A);
+      r.close();
+    } catch {
+      // TODO: fix error
+      // stderr.writeln("Failed to read '", aFile.path, "'");
+      exit(0);
     }
   }
 
