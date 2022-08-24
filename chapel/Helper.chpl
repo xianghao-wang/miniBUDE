@@ -61,4 +61,8 @@ module Helper {
     }
     return x;
   }
+
+  proc dom0(exclusiveUpper: int): domain(1) {
+    return {0..(exclusiveUpper-1)};
+  }
 }
