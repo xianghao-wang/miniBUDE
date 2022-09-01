@@ -6,7 +6,7 @@ module VecPoseInner {
   use FFParams;
 
   // TODO: macro in chapel
-
+  // Configurations
   const CNSTNT: real(32) = 45.0;
   const HBTYPE_F: real(32) = 70;
   const HBTYPE_E: real(32) = 69;
@@ -141,13 +141,44 @@ module VecPoseInner {
           const dslv_init: real(32) =
             p_hphb + l_hphb; 
 
+          // NOTE: SIMD v.s. data parallelism
+          forall l in 0..(WGSIZE-1) {
+            // Calculate distance between atoms
+            const x: real(32) = lpos_x(1) - p_atom.x;
+            const y: real(32) = lpos_y(1) - p_atom.y;
+            const z: real(32) = lpos_z(1) - p_atom.z;
+            const distij: real(32) = sqrt(x * x + y * y + z* z); 
+
+            // Calculate the sum of the sphere radii
+            const distbb: real(32) = distij - radij;
+
+            const zone1: bool = distbb < 0.0;
+
+            // Calculate steric energy
+            etot[l] = etot[l] + (1.0 - distij * r_radij) * (
+              if zone1 then 2.0 * HARDNESS else 0.0
+            );
+
+            // Calculate formal and dipole charge interactions
+            var chrg_e: real(32) =
+              chrg_init * (
+                if zone1 then 1.0: real(32) else 1.0: real(32) - distbb * elcdst1
+              ) * (
+                if distbb < elcdst then 1.0: real(32) else 0.0: real(32)
+              );
+            var neg_chrg_e: real(32) = -abs(chrg_e);
+            chrg_e = if type_E then neg_chrg_e else chrg_e;
+            etot[l] = etot[l] + chrg_e * CNSTNT;
+          }
           ip += 1;
         } while (ip < natpro);
-
-
         il += 1;
       } while (il < natlig);
 
+      // NOTE: SIMD
+      forall l in 0..(WGSIZE-1) {
+        results[group * WGSIZE + l] = etot[l] * 0.5;
+      }
     }
   }
 
