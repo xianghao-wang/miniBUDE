@@ -7,12 +7,12 @@ module VecPoseInner {
 
   // TODO: macro in chapel
 
-  const CNSTNT = 45.0,
-        HBTYPE_F = 70,
-        HBTYPE_E = 69,
-        HARDNESS = 38.0,
-        NPNPDIST = 5.5,
-        NPPDIST = 1.0;
+  const CNSTNT: real(32) = 45.0;
+  const HBTYPE_F: real(32) = 70;
+  const HBTYPE_E: real(32) = 69;
+  const HARDNESS: real(32) = 38.0;
+  const NPNPDIST: real(32) = 5.5;
+  const NPPDIST: real(32) = 1.0;
 
   proc fasten_main(
     natlig: int,
@@ -116,22 +116,30 @@ module VecPoseInner {
               then -1.0: real(32)
               else 1.0: real(32)
           );
-
           const l_hphb = l_params.hphb * (
             if phphb_gtz && lhphb_ltz
               then -1.0: real(32)
               else 1.0: real(32)
           );
+          const distdslv =
+            if phphb_ltz
+            then (
+              if lhphb_ltz
+              then NPNPDIST
+              else NPPDIST
+            ) else (
+              if lhphb_ltz
+              then NPPDIST
+              else -max(real(32))
+            );
+          const r_distdslv: real(32) = 
+            1.0 / distdslv;
 
-          // TODO: get upper bound of real(32)
-          // const distdslv = 
-          //   if phphb_ltz then (
-          //     if lhphb_ltz
-          //       then NPNPDIST else NPPDIST
-          //   ) else (
-          //     if lhphb_ltz
-          //       then NPPDIST else 
-          //   )
+          const chrg_init: real(32) =
+            l_params.elsc * p_params.elsc;
+
+          const dslv_init: real(32) =
+            p_hphb + l_hphb; 
 
           ip += 1;
         } while (ip < natpro);
