@@ -74,11 +74,11 @@ module Bude {
     writeln("start");
 
     // NOTE: SIMD
-    // coforall itr in 1..params.iterations {
+    coforall itr in 1..params.iterations {
       forall group in dom0(params.nposes / WGSIZE) {
         fasten_main(params.natlig, params.natpro, protein, ligand, poses, buffer, forcefield, group);
       }
-    // }
+    }
 
     // timestamp: end
     const end = timestamp();
