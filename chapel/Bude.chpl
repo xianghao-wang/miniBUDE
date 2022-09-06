@@ -33,8 +33,6 @@ module Bude {
 
 
   proc compute(ref results: [] real(32)) {
-    // TODO: restirct keyword
-
     writeln("\nRunning Chapel");
 
     var poses: [params.poses.domain] real(32);
@@ -60,10 +58,8 @@ module Bude {
       forcefield[i] = params.forcefield[i];
     }
 
-    writeln("warmup");
-    // TODO: infinite loop noted
     // Warm-up
-    for group in dom0(params.nposes/WGSIZE) {
+    forall group in dom0(params.nposes/WGSIZE) {
       fasten_main(params.natlig, params.natpro, protein, ligand,
                   poses, buffer, forcefield, group);
     }
@@ -71,7 +67,6 @@ module Bude {
     // Core part of computing
     // timestamp: start
     const start = timestamp();
-    writeln("start");
 
     // NOTE: SIMD
     for itr in 1..params.iterations {
@@ -82,13 +77,35 @@ module Bude {
 
     // timestamp: end
     const end = timestamp();
-    writeln("end");
 
-    results = buffer;
-    writeln(end - start);
+    printTimings(start, end);
   }
 
   proc timestamp(): real(64) {
     return getCurrentTime(unit=TimeUnits.milliseconds);
+  }
+
+  proc printTimings(start: real(64), end: real(64)) {
+    const ms = (end - start) / params.iterations;
+    const runtime = ms * 1e-3;
+
+    const ops_per_wg = WGSIZE * 27 + params.natlig * (2 + WGSIZE * 18 + params.natpro * (10 + WGSIZE * 30)) + WGSIZE;
+    const total_ops = ops_per_wg * (params.nposes / WGSIZE);
+    const flops = total_ops / runtime;
+    const gflops = flops / 1e9;
+
+    const total_finsts = 25.0 * params.natpro * params.natlig * params.nposes;
+    const finsts = total_finsts / runtime;
+    const gfinsts = finsts / 1e9;
+
+    const interactions = 1.0 * params.nposes * params.natlig * params.natpro;
+    const interactions_per_sec = interactions / runtime;
+
+    // Print stats
+    writeln("- Total time:     ", (end-start), " ms");
+    writeln("- Average time:   ", ms, " ms");
+    writeln("- Interactions/s: ", (interactions_per_sec / 1e9), " billion");
+    writeln("- GFLOP/s:        ", gflops);
+    writeln("- GFInst/s:       ", gfinsts);
   }
 }
