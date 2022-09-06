@@ -29,7 +29,7 @@ module VecPoseInner {
     var transform: [{0..2, 0..3, 0..(WGSIZE-1)}] real(32);
     var etot: [{0..(WGSIZE-1)}] real(32);
 
-    forall l in dom0(WGSIZE) {
+    for l in dom0(WGSIZE) {
       const ix = group * WGSIZE + l;
 
       // Compute transformation matrix
@@ -142,7 +142,7 @@ module VecPoseInner {
             p_hphb + l_hphb; 
 
           // NOTE: SIMD v.s. data parallelism
-          forall l in 0..(WGSIZE-1) {
+          for l in 0..(WGSIZE-1) {
             // Calculate distance between atoms
             const x: real(32) = lpos_x(1) - p_atom.x;
             const y: real(32) = lpos_y(1) - p_atom.y;
@@ -176,7 +176,7 @@ module VecPoseInner {
       } while (il < natlig);
 
       // NOTE: SIMD
-      forall l in 0..(WGSIZE-1) {
+      for l in 0..(WGSIZE-1) {
         results[group * WGSIZE + l] = etot[l] * 0.5;
       }
     }
