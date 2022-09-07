@@ -58,7 +58,7 @@ module Bude {
       }
     }
 
-    writeln("\nLargest difference was ", 100 * maxdiff, ".\n");
+    writeln("\nLargest difference was ", 100 * maxdiff, "%.\n");
   }
 
 

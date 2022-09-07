@@ -8,8 +8,8 @@ module VecPoseInner {
   // TODO: macro in chapel
   // Configurations
   const CNSTNT: real(32) = 45.0;
-  const HBTYPE_F: real(32) = 70;
-  const HBTYPE_E: real(32) = 69;
+  const HBTYPE_F: real(32) = 70.0;
+  const HBTYPE_E: real(32) = 69.0;
   const HARDNESS: real(32) = 38.0;
   const NPNPDIST: real(32) = 5.5;
   const NPPDIST: real(32) = 1.0;
@@ -23,8 +23,6 @@ module VecPoseInner {
     ref results: [] real(32),
     ref forcefield: [] ffParams,
     group: int) {
-
-    // TODO: False Sharing
 
     var transform: [{0..2, 0..3, 0..(WGSIZE-1)}] real(32);
     var etot: [{0..(WGSIZE-1)}] real(32);
@@ -53,7 +51,7 @@ module VecPoseInner {
       transform(2, 2, l) = cx*cy;
       transform(2, 3, l) = transforms(5, ix);
 
-      etot[l] = 0;
+      etot[l] = 0.0;
     }
 
     {
@@ -104,7 +102,7 @@ module VecPoseInner {
             else 0.5: real(32);
 
           const type_E = 
-            p_params.hbtype == HBTYPE_E &&
+            p_params.hbtype == HBTYPE_E ||
             l_params.hbtype == HBTYPE_E;
 
           const phphb_ltz = p_params.hphb <  0: real(32);
@@ -144,9 +142,9 @@ module VecPoseInner {
           // NOTE: SIMD v.s. data parallelism
           for l in 0..(WGSIZE-1) {
             // Calculate distance between atoms
-            const x: real(32) = lpos_x(1) - p_atom.x;
-            const y: real(32) = lpos_y(1) - p_atom.y;
-            const z: real(32) = lpos_z(1) - p_atom.z;
+            const x: real(32) = lpos_x(l) - p_atom.x;
+            const y: real(32) = lpos_y(l) - p_atom.y;
+            const z: real(32) = lpos_z(l) - p_atom.z;
             const distij: real(32) = sqrt(x * x + y * y + z* z); 
 
             // Calculate the sum of the sphere radii
@@ -169,6 +167,16 @@ module VecPoseInner {
             var neg_chrg_e: real(32) = -abs(chrg_e);
             chrg_e = if type_E then neg_chrg_e else chrg_e;
             etot[l] = etot[l] + chrg_e * CNSTNT;
+
+            const coeff:real (32) = 1.0: real(32) - distbb * r_distdslv;
+            var dslv_e: real(32) = dslv_init * (
+              if distbb < distdslv && phphb_nz
+              then 1.0: real(32)
+              else 0.0: real(32)
+            );
+
+            dslv_e *= if zone1 then 1.0: real(32) else coeff;
+            etot[l] = etot[l] + dslv_e;
           }
           ip += 1;
         } while (ip < natpro);
