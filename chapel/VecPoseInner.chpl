@@ -24,10 +24,12 @@ module VecPoseInner {
     ref forcefield: [] ffParams,
     group: int) {
 
-    var transform: [{0..2, 0..3, 0..(WGSIZE-1)}] real(32);
-    var etot: [{0..(WGSIZE-1)}] real(32);
+    const wg_ran = 0..WGSIZE-1;
 
-    for l in dom0(WGSIZE) {
+    var transform: [0..2, 0..3, wg_ran] real(32);
+    var etot: [wg_ran] real(32);
+
+    for l in wg_ran {
       const ix = group * WGSIZE + l;
 
       // Compute transformation matrix
@@ -63,11 +65,11 @@ module VecPoseInner {
         const lhphb_ltz = l_params.hphb < 0;
         const lhphb_gtz = l_params.hphb > 0;
 
-        var lpos_x: [dom0(WGSIZE)] real(32);
-        var lpos_y: [dom0(WGSIZE)] real(32);
-        var lpos_z: [dom0(WGSIZE)] real(32);
+        var lpos_x: [wg_ran] real(32);
+        var lpos_y: [wg_ran] real(32);
+        var lpos_z: [wg_ran] real(32);
 
-        forall l in {0..(WGSIZE-1)} {
+        forall l in wg_ran {
           lpos_x(l) = transform(0, 3, l)
             + l_atom.x * transform(0, 0, l)
             + l_atom.y * transform(0, 1, l)
@@ -140,7 +142,7 @@ module VecPoseInner {
             p_hphb + l_hphb; 
 
           // NOTE: SIMD v.s. data parallelism
-          for l in 0..(WGSIZE-1) {
+          for l in wg_ran {
             // Calculate distance between atoms
             const x: real(32) = lpos_x(l) - p_atom.x;
             const y: real(32) = lpos_y(l) - p_atom.y;
@@ -183,8 +185,7 @@ module VecPoseInner {
         il += 1;
       } while (il < natlig);
 
-      // NOTE: SIMD
-      for l in 0..(WGSIZE-1) {
+      for l in wg_ran {
         results[group * WGSIZE + l] = etot[l] * 0.5;
       }
     }
