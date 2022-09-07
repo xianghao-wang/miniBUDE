@@ -48,7 +48,7 @@ module Helper {
       r.close();
     } catch {
       // TODO: fix error
-      // stderr.writeln("Failed to read '", aFile.path, "'");
+      try! stderr.writeln("Failed to read '", aFile.path, "'");
       exit(0);
     }
   }

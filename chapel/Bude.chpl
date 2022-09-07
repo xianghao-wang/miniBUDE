@@ -1,4 +1,5 @@
 module Bude {
+  use IO;
   use Time;
   use Context;
   use Helper;
@@ -6,6 +7,7 @@ module Bude {
   use FFParams;
   use VecPoseInner;
   use Configuration;
+  use AutoMath;
 
   var params: context;
   var resultDom: domain(1);
@@ -29,6 +31,34 @@ module Bude {
     var energiesChapel: [dom0(params.nposes)] real(32);
     // Compute
     compute(energiesChapel);
+
+    // Validate energies
+    var length: int;
+    const ref_energies = openFile(params.deckDir, FILE_REF_ENERGIES, iomode.r, length);
+    var e: real(32);
+    var diff: real(32);
+    var maxdiff: real(32) = -100.0;
+    var n_ref_poses = params.nposes;
+    if (params.nposes > REF_NPOSES) {
+      writeln("Only validating the first ", REF_NPOSES, " poses");
+      n_ref_poses = REF_NPOSES;
+    }
+
+    // Read expected output file and validate the actual results
+    var reader = try! ref_energies.reader();
+    for i in dom0(n_ref_poses) {
+      try! reader.read(e);
+      if (abs(e) < 1.0 && abs(energiesChapel(i)) < 1.0) {
+        continue;
+      }
+
+      diff = abs(e - energiesChapel(i)) / e;
+      if (diff > maxdiff) {
+        maxdiff = diff;
+      }
+    }
+
+    writeln("\nLargest difference was ", 100 * maxdiff, ".\n");
   }
 
 
@@ -77,6 +107,9 @@ module Bude {
 
     // timestamp: end
     const end = timestamp();
+
+    // Copy to result
+    results = buffer;
 
     printTimings(start, end);
   }
