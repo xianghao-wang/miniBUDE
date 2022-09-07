@@ -7,12 +7,12 @@ module VecPoseInner {
 
   // TODO: macro in chapel
   // Configurations
-  const CNSTNT: real(32) = 45.0;
-  const HBTYPE_F: real(32) = 70.0;
-  const HBTYPE_E: real(32) = 69.0;
-  const HARDNESS: real(32) = 38.0;
-  const NPNPDIST: real(32) = 5.5;
-  const NPPDIST: real(32) = 1.0;
+  param CNSTNT: real(32) = 45.0;
+  param HBTYPE_F: real(32) = 70.0;
+  param HBTYPE_E: real(32) = 69.0;
+  param HARDNESS: real(32) = 38.0;
+  param NPNPDIST: real(32) = 5.5;
+  param NPPDIST: real(32) = 1.0;
 
   proc fasten_main(
     natlig: int,
