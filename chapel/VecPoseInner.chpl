@@ -69,7 +69,8 @@ module VecPoseInner {
         var lpos_y: [wg_ran] real(32);
         var lpos_z: [wg_ran] real(32);
 
-        forall l in wg_ran {
+        
+        for l in wg_ran {
           lpos_x(l) = transform(0, 3, l)
             + l_atom.x * transform(0, 0, l)
             + l_atom.y * transform(0, 1, l)
