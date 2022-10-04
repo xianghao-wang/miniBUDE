@@ -98,7 +98,6 @@ module Bude {
     // timestamp: start
     const start = timestamp();
 
-    // NOTE: SIMD
     for itr in 1..params.iterations {
       forall group in dom0(params.nposes / WGSIZE) {
         fasten_main(params.natlig, params.natpro, protein, ligand, poses, buffer, forcefield, group);

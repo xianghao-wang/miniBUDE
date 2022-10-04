@@ -27,6 +27,9 @@ module VecPoseInner {
     const wg_ran = 0..WGSIZE-1;
 
     var transform: [0..2, 0..3, wg_ran] real(32);
+    var transform0: [0..3, wg_ran] real(32);
+    var transform1: [0..3, wg_ran] real(32);
+    var transform2: [0..3, wg_ran] real(32);
     var etot: [wg_ran] real(32);
 
     for l in wg_ran {
@@ -40,18 +43,20 @@ module VecPoseInner {
       const sz = sin(transforms(2, ix));
       const cz = cos(transforms(2, ix));
 
-      transform(0, 0, l) = cy*cz;
-      transform(0, 1, l) = sx*sy*cz - cx*sz;
-      transform(0, 2, l) = cx*sy*cz + sx*sz;
-      transform(0, 3, l) = transforms(3, ix);
-      transform(1, 0, l) = cy*sz;
-      transform(1, 1, l) = sx*sy*sz + cx*cz;
-      transform(1, 2, l) = cx*sy*sz - sx*cz;
-      transform(1, 3, l) = transforms(4, ix);
-      transform(2, 0, l) = -sy;
-      transform(2, 1, l) = sx*cy;
-      transform(2, 2, l) = cx*cy;
-      transform(2, 3, l) = transforms(5, ix);
+      transform0(0, l) = cy*cz;
+      transform0(1, l) = sx*sy*cz - cx*sz;
+      transform0(2, l) = cx*sy*cz + sx*sz;
+      transform0(3, l) = transforms(3, ix);
+      transform1(0, l) = cy*sz;
+
+      transform1(1, l) = sx*sy*sz + cx*cz;
+      
+      transform1(2, l) = cx*sy*sz - sx*cz;
+      transform1(3, l) = transforms(4, ix);
+      transform2(0, l) = -sy;
+      transform2(1, l) = sx*cy;
+      transform2(2, l) = cx*cy;
+      transform2(3, l) = transforms(5, ix);
 
       etot[l] = 0.0;
     }
@@ -71,18 +76,18 @@ module VecPoseInner {
 
         
         for l in wg_ran {
-          lpos_x(l) = transform(0, 3, l)
-            + l_atom.x * transform(0, 0, l)
-            + l_atom.y * transform(0, 1, l)
-            + l_atom.z * transform(0, 2, l);
-          lpos_y(l) = transform(1, 3, l)
-            + l_atom.x * transform(1, 0, l)
-            + l_atom.y * transform(1, 1, l)
-            + l_atom.z * transform(1, 2, l);
-          lpos_z(l) = transform(2, 3, l)
-            + l_atom.x * transform(2, 0, l)
-            + l_atom.y * transform(2, 1, l)
-            + l_atom.z * transform(2, 2, l);
+          lpos_x(l) = transform0(3, l)
+            + l_atom.x * transform0(0, l)
+            + l_atom.y * transform0(1, l)
+            + l_atom.z * transform0(2, l);
+          lpos_y(l) = transform1(3, l)
+            + l_atom.x * transform1(0, l)
+            + l_atom.y * transform1(1, l)
+            + l_atom.z * transform1(2, l);
+          lpos_z(l) = transform2(3, l)
+            + l_atom.x * transform2(0, l)
+            + l_atom.y * transform2(1, l)
+            + l_atom.z * transform2(2, l);
         }
 
         // Loop over protein atoms
@@ -142,22 +147,37 @@ module VecPoseInner {
           const dslv_init: real(32) =
             p_hphb + l_hphb; 
 
+          // for l in 0..3 {
+          //   const x: real(32) = lpos_x(l) - p_atom.x;
+          //   const y: real(32) = lpos_y(l) - p_atom.y;
+          //   const z: real(32) = lpos_z(l) - p_atom.z;
+          //   distij_arr[l] = sqrt(x * x + y * y + z* z); 
+          // }
+
           // NOTE: SIMD v.s. data parallelism
-          for l in wg_ran {
-            // Calculate distance between atoms
+          for l in 0..3 {
             const x: real(32) = lpos_x(l) - p_atom.x;
             const y: real(32) = lpos_y(l) - p_atom.y;
             const z: real(32) = lpos_z(l) - p_atom.z;
             const distij: real(32) = sqrt(x * x + y * y + z* z); 
+            // Calculate distance between atoms
+            // const x: real(32) = lpos_x(l) - p_atom.x;
+            // const y: real(32) = lpos_y(l) - p_atom.y;
+            // const z: real(32) = lpos_z(l) - p_atom.z;
+
+            // const distij: real(32) = sqrt(x * x + y * y + z* z); 
+            // TODO: remove sqrt
+            // const distij: real(32) = x * x + y * y + z * z;
 
             // Calculate the sum of the sphere radii
+            // const distij = distij_arr[l];
             const distbb: real(32) = distij - radij;
 
-            const zone1: bool = distbb < 0.0;
+            const zone1: bool = distbb < 0.0: real(32);
 
             // Calculate steric energy
             etot[l] = etot[l] + (1.0 - distij * r_radij) * (
-              if zone1 then 2.0 * HARDNESS else 0.0
+              if zone1 then 2.0: real(32) * HARDNESS else 0.0: real(32)
             );
 
             // Calculate formal and dipole charge interactions
