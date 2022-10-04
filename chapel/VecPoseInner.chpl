@@ -5,7 +5,6 @@ module VecPoseInner {
   use Atom;
   use FFParams;
 
-  // TODO: macro in chapel
   // Configurations
   param CNSTNT: real(32) = 45.0;
   param HBTYPE_F: real(32) = 70.0;
@@ -24,15 +23,10 @@ module VecPoseInner {
     ref forcefield: [] ffParams,
     group: int) {
 
-    const wg_ran = 0..WGSIZE-1;
+    var transform: [0..<3, 0..<4, 0..<WGSIZE] real(32);
+    var etot: [0..<WGSIZE] real(32);
 
-    var transform: [0..2, 0..3, wg_ran] real(32);
-    var transform0: [0..3, wg_ran] real(32);
-    var transform1: [0..3, wg_ran] real(32);
-    var transform2: [0..3, wg_ran] real(32);
-    var etot: [wg_ran] real(32);
-
-    for l in wg_ran {
+    for l in 0..<WGSIZE {
       const ix = group * WGSIZE + l;
 
       // Compute transformation matrix
@@ -43,22 +37,19 @@ module VecPoseInner {
       const sz = sin(transforms(2, ix));
       const cz = cos(transforms(2, ix));
 
-      transform0(0, l) = cy*cz;
-      transform0(1, l) = sx*sy*cz - cx*sz;
-      transform0(2, l) = cx*sy*cz + sx*sz;
-      transform0(3, l) = transforms(3, ix);
-      transform1(0, l) = cy*sz;
 
-      transform1(1, l) = sx*sy*sz + cx*cz;
-      
-      transform1(2, l) = cx*sy*sz - sx*cz;
-      transform1(3, l) = transforms(4, ix);
-      transform2(0, l) = -sy;
-      transform2(1, l) = sx*cy;
-      transform2(2, l) = cx*cy;
-      transform2(3, l) = transforms(5, ix);
-
-      etot[l] = 0.0;
+      transform(0, 0, l) = cy*cz;
+      transform(0, 1, l) = sx*sy*cz - cx*sz;
+      transform(0, 2, l) = cx*sy*cz + sx*sz;
+      transform(0, 3, l) = transforms(3, ix);
+      transform(1, 0, l) = cy*sz;
+      transform(1, 1, l) = sx*sy*sz + cx*cz;      
+      transform(1, 2, l) = cx*sy*sz - sx*cz;
+      transform(1, 3, l) = transforms(4, ix);
+      transform(2, 0, l) = -sy;
+      transform(2, 1, l) = sx*cy;
+      transform(2, 2, l) = cx*cy;
+      transform(2, 3, l) = transforms(5, ix);
     }
 
     {
@@ -67,27 +58,27 @@ module VecPoseInner {
       do {
         const l_atom = ligand[il];
         const l_params = forcefield[l_atom.aType];
-        const lhphb_ltz = l_params.hphb < 0;
-        const lhphb_gtz = l_params.hphb > 0;
+        const lhphb_ltz = l_params.hphb < 0.0;
+        const lhphb_gtz = l_params.hphb > 0.0;
 
-        var lpos_x: [wg_ran] real(32);
-        var lpos_y: [wg_ran] real(32);
-        var lpos_z: [wg_ran] real(32);
+        var lpos_x: [0..<WGSIZE] real(32);
+        var lpos_y: [0..<WGSIZE] real(32);
+        var lpos_z: [0..<WGSIZE] real(32);
 
         
-        for l in wg_ran {
-          lpos_x(l) = transform0(3, l)
-            + l_atom.x * transform0(0, l)
-            + l_atom.y * transform0(1, l)
-            + l_atom.z * transform0(2, l);
-          lpos_y(l) = transform1(3, l)
-            + l_atom.x * transform1(0, l)
-            + l_atom.y * transform1(1, l)
-            + l_atom.z * transform1(2, l);
-          lpos_z(l) = transform2(3, l)
-            + l_atom.x * transform2(0, l)
-            + l_atom.y * transform2(1, l)
-            + l_atom.z * transform2(2, l);
+        for l in 0..<WGSIZE {
+          lpos_x(l) = transform(0, 3, l)
+            + l_atom.x * transform(0, 0, l)
+            + l_atom.y * transform(0, 1, l)
+            + l_atom.z * transform(0, 2, l);
+          lpos_y(l) = transform(1, 3, l)
+            + l_atom.x * transform(1, 0, l)
+            + l_atom.y * transform(1, 1, l)
+            + l_atom.z * transform(1, 2, l);
+          lpos_z(l) = transform(2, 3, l)
+            + l_atom.x * transform(2, 0, l)
+            + l_atom.y * transform(2, 1, l)
+            + l_atom.z * transform(2, 2, l);
         }
 
         // Loop over protein atoms
@@ -97,7 +88,7 @@ module VecPoseInner {
           const p_params = forcefield(p_atom.aType);
 
           const radij: real(32) = p_params.radius + l_params.radius;
-          const r_radij: real(32) = 1.0 / radij;
+          const r_radij: real(32) = 1.0: real(32) / radij;
 
           const elcdst: real(32) = if
             p_params.hbtype == HBTYPE_F && l_params.hbtype == HBTYPE_F
@@ -147,49 +138,40 @@ module VecPoseInner {
           const dslv_init: real(32) =
             p_hphb + l_hphb; 
 
-          // for l in 0..3 {
-          //   const x: real(32) = lpos_x(l) - p_atom.x;
-          //   const y: real(32) = lpos_y(l) - p_atom.y;
-          //   const z: real(32) = lpos_z(l) - p_atom.z;
-          //   distij_arr[l] = sqrt(x * x + y * y + z* z); 
-          // }
-
-          // NOTE: SIMD v.s. data parallelism
-          for l in 0..3 {
+          for l in 0..<WGSIZE {
+            // Calculate distance between atoms
             const x: real(32) = lpos_x(l) - p_atom.x;
             const y: real(32) = lpos_y(l) - p_atom.y;
             const z: real(32) = lpos_z(l) - p_atom.z;
-            const distij: real(32) = sqrt(x * x + y * y + z* z); 
-            // Calculate distance between atoms
-            // const x: real(32) = lpos_x(l) - p_atom.x;
-            // const y: real(32) = lpos_y(l) - p_atom.y;
-            // const z: real(32) = lpos_z(l) - p_atom.z;
 
-            // const distij: real(32) = sqrt(x * x + y * y + z* z); 
-            // TODO: remove sqrt
-            // const distij: real(32) = x * x + y * y + z * z;
+            const distij: real(32) = sqrt(x * x + y * y + z* z); 
 
             // Calculate the sum of the sphere radii
-            // const distij = distij_arr[l];
             const distbb: real(32) = distij - radij;
-
             const zone1: bool = distbb < 0.0: real(32);
 
             // Calculate steric energy
-            etot[l] = etot[l] + (1.0 - distij * r_radij) * (
-              if zone1 then 2.0: real(32) * HARDNESS else 0.0: real(32)
-            );
+            etot[l] += (1.0 - distij * r_radij) *
+              (
+                if zone1
+                then 2.0: real(32) * HARDNESS
+                else 0.0: real(32)
+              );
 
             // Calculate formal and dipole charge interactions
             var chrg_e: real(32) =
               chrg_init * (
-                if zone1 then 1.0: real(32) else 1.0: real(32) - distbb * elcdst1
+                if zone1 
+                then 1.0: real(32)
+                 else 1.0: real(32) - distbb * elcdst1
               ) * (
-                if distbb < elcdst then 1.0: real(32) else 0.0: real(32)
+                if distbb < elcdst 
+                then 1.0: real(32)
+                else 0.0: real(32)
               );
             var neg_chrg_e: real(32) = -abs(chrg_e);
             chrg_e = if type_E then neg_chrg_e else chrg_e;
-            etot[l] = etot[l] + chrg_e * CNSTNT;
+            etot[l] += chrg_e * CNSTNT;
 
             const coeff:real (32) = 1.0: real(32) - distbb * r_distdslv;
             var dslv_e: real(32) = dslv_init * (
@@ -199,15 +181,15 @@ module VecPoseInner {
             );
 
             dslv_e *= if zone1 then 1.0: real(32) else coeff;
-            etot[l] = etot[l] + dslv_e;
+            etot[l] += dslv_e;
           }
           ip += 1;
         } while (ip < natpro);
         il += 1;
       } while (il < natlig);
 
-      for l in wg_ran {
-        results[group * WGSIZE + l] = etot[l] * 0.5;
+      for l in 0..<WGSIZE {
+        results[group * WGSIZE + l] = etot[l] * 0.5: real(32);
       }
     }
   }
