@@ -3,3 +3,4 @@
 !.gitignore
 !*.chpl
 !*.sh
+!Makefile
