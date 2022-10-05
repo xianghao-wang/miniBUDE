@@ -1,4 +1,4 @@
-bude_options = --no-ieee-float --fast
+bude_options = --no-ieee-float --fast -s WGSIZE=256
 vec_options = -g --mllvm "--pass-remarks-analysis=loop-vectorize --pass-remarks=loop-vectorize -force-vector-interleave=4" 
 extra_ops = --copy-propagation --dead-code-elimination --loop-invariant-code-motion --inline-iterators --privatization --optimize-range-iteration
 
