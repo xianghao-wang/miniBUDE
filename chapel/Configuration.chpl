@@ -1,5 +1,5 @@
 module Configuration {
-  param WGSIZE = 4,
+  config param WGSIZE = 4,
         DEFAULT_ITERS = 8,
         DEFAULT_NPOSES = 65536,
         REF_NPOSES = 65536,
