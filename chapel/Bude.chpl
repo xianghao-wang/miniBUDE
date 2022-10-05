@@ -8,6 +8,7 @@ module Bude {
   use VecPoseInner;
   use Configuration;
   use AutoMath;
+  use IO.FormattedIO;
 
   var params: context;
   var resultDom: domain(1);
@@ -17,18 +18,17 @@ module Bude {
     // Load context
     params = new context(args);
     params.load();
-    resultDom = {0..(params.nposes-1)};
 
     // Show meta-information
     writeln("");
-    writeln("Poses     :", params.nposes);
-    writeln("Iterations:", params.iterations);
-    writeln("Ligands   :", params.natlig);
-    writeln("Proteins  :", params.natpro);
-    writeln("Deck      :", params.deckDir);
+    writeln("Poses     : ", params.nposes);
+    writeln("Iterations: ", params.iterations);
+    writeln("Ligands   : ", params.natlig);
+    writeln("Proteins  : ", params.natpro);
+    writeln("Deck      : ", params.deckDir);
 
     
-    var energiesChapel: [dom0(params.nposes)] real(32);
+    var energiesChapel: [0..<params.nposes] real(32);
     // Compute
     compute(energiesChapel);
 
@@ -44,7 +44,6 @@ module Bude {
       n_ref_poses = REF_NPOSES;
     }
 
-    // Read expected output file and validate the actual results
     var reader = try! ref_energies.reader();
     for i in dom0(n_ref_poses) {
       try! reader.read(e);
@@ -58,7 +57,7 @@ module Bude {
       }
     }
 
-    writeln("\nLargest difference was ", 100 * maxdiff, "%.\n");
+    writef("\nLargest difference was %{.###}%%.\n\n", 100 * maxdiff);
   }
 
 
@@ -89,22 +88,19 @@ module Bude {
     }
 
     // Warm-up
-    forall group in dom0(params.nposes/WGSIZE) {
+    forall group in 0..<params.nposes/WGSIZE {
       fasten_main(params.natlig, params.natpro, protein, ligand,
                   poses, buffer, forcefield, group);
     }
 
-    // Core part of computing
-    // timestamp: start
-    const start = timestamp();
 
-    for itr in 1..params.iterations {
+    // Core part of computing
+    const start = timestamp();
+    for itr in 0..<params.iterations {
       forall group in dom0(params.nposes / WGSIZE) {
         fasten_main(params.natlig, params.natpro, protein, ligand, poses, buffer, forcefield, group);
       }
     }
-
-    // timestamp: end
     const end = timestamp();
 
     // Copy to result
@@ -134,10 +130,10 @@ module Bude {
     const interactions_per_sec = interactions / runtime;
 
     // Print stats
-    writeln("- Total time:     ", (end-start), " ms");
-    writeln("- Average time:   ", ms, " ms");
-    writeln("- Interactions/s: ", (interactions_per_sec / 1e9), " billion");
-    writeln("- GFLOP/s:        ", gflops);
-    writeln("- GFInst/s:       ", gfinsts);
+    writef("- Total time:     %7.3dr ms\n", end - start);
+    writef("- Average time:   %7.3dr ms\n", ms);
+    writef("- Interactions/s: %7.3dr billion\n", (interactions_per_sec / 1e9));
+    writef("- GFLOP/s:        %7.3dr\n", gflops);
+    writef("- GFInst/s:       %7.3dr\n", gfinsts);
   }
 }
