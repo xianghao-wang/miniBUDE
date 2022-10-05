@@ -1,5 +1,5 @@
 bude_options = --no-ieee-float --fast
-vec_options = -g --mllvm "--pass-remarks-analysis=loop-vectorize --pass-remarks=loop-vectorize" 
+vec_options = -g --mllvm "--pass-remarks-analysis=loop-vectorize --pass-remarks=loop-vectorize -force-vector-interleave=4" 
 extra_ops = --copy-propagation --dead-code-elimination --loop-invariant-code-motion --inline-iterators --privatization --optimize-range-iteration
 
 bude:
