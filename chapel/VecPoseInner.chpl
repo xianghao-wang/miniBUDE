@@ -26,7 +26,7 @@ module VecPoseInner {
     var transform: [0..<3, 0..<4, 0..<WGSIZE] real(32);
     var etot: [0..<WGSIZE] real(32);
 
-    for l in 0..<WGSIZE {
+    foreach l in 0..<WGSIZE {
       const ix = group * WGSIZE + l;
 
       // Compute transformation matrix
@@ -138,7 +138,7 @@ module VecPoseInner {
           const dslv_init: real(32) =
             p_hphb + l_hphb; 
 
-          for l in 0..<WGSIZE {
+          foreach l in 0..<WGSIZE {
             // Calculate distance between atoms
             const x: real(32) = lpos_x(l) - p_atom.x;
             const y: real(32) = lpos_y(l) - p_atom.y;
@@ -188,7 +188,7 @@ module VecPoseInner {
         il += 1;
       } while (il < natlig);
 
-      for l in 0..<WGSIZE {
+      foreach l in 0..<WGSIZE {
         results[group * WGSIZE + l] = etot[l] * 0.5: real(32);
       }
     }
