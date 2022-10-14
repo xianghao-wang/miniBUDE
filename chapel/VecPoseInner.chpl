@@ -61,25 +61,24 @@ module VecPoseInner {
         const lhphb_ltz = l_params.hphb < 0.0;
         const lhphb_gtz = l_params.hphb > 0.0;
 
-        var lpos_x: [0..<WGSIZE] real(32);
-        var lpos_y: [0..<WGSIZE] real(32);
-        var lpos_z: [0..<WGSIZE] real(32);
+        var lpos_x: [0..<WGSIZE] real(32) =
+            transform(0, 3, 0..<WGSIZE)
+          + l_atom.x * transform(0, 0, 0..<WGSIZE)
+          + l_atom.y * transform(0, 1, 0..<WGSIZE)
+          + l_atom.z * transform(0, 2, 0..<WGSIZE);
 
-        
-        for l in 0..<WGSIZE {
-          lpos_x(l) = transform(0, 3, l)
-            + l_atom.x * transform(0, 0, l)
-            + l_atom.y * transform(0, 1, l)
-            + l_atom.z * transform(0, 2, l);
-          lpos_y(l) = transform(1, 3, l)
-            + l_atom.x * transform(1, 0, l)
-            + l_atom.y * transform(1, 1, l)
-            + l_atom.z * transform(1, 2, l);
-          lpos_z(l) = transform(2, 3, l)
-            + l_atom.x * transform(2, 0, l)
-            + l_atom.y * transform(2, 1, l)
-            + l_atom.z * transform(2, 2, l);
-        }
+        var lpos_y: [0..<WGSIZE] real(32) =
+            transform(1, 3, 0..<WGSIZE)
+          + l_atom.x * transform(1, 0, 0..<WGSIZE)
+          + l_atom.y * transform(1, 1, 0..<WGSIZE)
+          + l_atom.z * transform(1, 2, 0..<WGSIZE);
+
+        var lpos_z: [0..<WGSIZE] real(32) =
+            transform(2, 3, 0..<WGSIZE)
+          + l_atom.x * transform(2, 0, 0..<WGSIZE)
+          + l_atom.y * transform(2, 1, 0..<WGSIZE)
+          + l_atom.z * transform(2, 2, 0..<WGSIZE);
+
 
         // Loop over protein atoms
         var ip = 0;
@@ -188,9 +187,8 @@ module VecPoseInner {
         il += 1;
       } while (il < natlig);
 
-      foreach l in 0..<WGSIZE {
-        results[group * WGSIZE + l] = etot[l] * 0.5: real(32);
-      }
+      // results[group * WGSIZE..<group * (WGSIZE + 1)] = 0.5 : real(32) * etot;
+      results[group * WGSIZE..<(group + 1) * WGSIZE] = 0.5 : real(32) * etot;
     }
   }
 
