@@ -1,0 +1,5 @@
+Threads,Chapel,OpenMP(Clang),OpenMP(GNU)
+32,88,55,83
+16,133,109,165
+8,265,126,198
+4,530,235,367
