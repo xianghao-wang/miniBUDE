@@ -1,6 +1,2 @@
-*
-
-!.gitignore
-!*.chpl
-!*.sh
-!Makefile
+bude*
+*.o
