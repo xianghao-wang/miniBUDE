@@ -64,35 +64,18 @@ module Bude {
   proc compute(ref results: [] real(32)) {
     writeln("\nRunning Chapel");
 
-    var poses: [params.poses.domain] real(32);
-    var protein: [params.protein.domain] atom;
-    var ligand: [params.ligand.domain] atom;
-    var forcefield: [params.forcefield.domain] ffParams;
-    // Note: array is initialised when created
-    var buffer: [dom0(params.nposes)] real(32);
-    
-    forall i in poses.domain {
-      poses[i] = params.poses[i];
-    }
-
-    forall i in protein.domain {
-      protein[i] = params.protein[i];
-    }
-
-    forall i in ligand.domain {
-      ligand[i] = params.ligand[i];
-    }
-
-    forall i in forcefield.domain {
-      forcefield[i] = params.forcefield[i];
-    }
+    var buffer: [dom0(params.nposes)] real(32);    
+    // Copy data
+    var poses = params.poses;
+    var protein = params.protein;
+    var ligand = params.ligand;
+    var forcefield = params.forcefield;
 
     // Warm-up
     forall group in 0..<params.nposes/WGSIZE {
       fasten_main(params.natlig, params.natpro, protein, ligand,
                   poses, buffer, forcefield, group);
     }
-
 
     // Core part of computing
     const start = timestamp();
