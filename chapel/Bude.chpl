@@ -63,7 +63,7 @@ module Bude {
   proc compute(ref results: [] real(32)) {
     writeln("\nRunning Chapel");
 
-    var buffer: [dom0(params.nposes)] real(32);    
+    var buffer: [0..<params.nposes] real(32);    
     // Copy data
     var poses = params.poses;
     var protein = params.protein;
@@ -79,7 +79,7 @@ module Bude {
     // Core part of computing
     const start = timestamp();
     for itr in 0..<params.iterations {
-      forall group in dom0(params.nposes / WGSIZE) {
+      forall group in 0..<params.nposes / WGSIZE {
         fasten_main(params.natlig, params.natpro, protein, ligand, poses, buffer, forcefield, group);
       }
     }
