@@ -94,10 +94,7 @@ module Context {
       this.forcefieldDom = {0..(this.ntypes-1)};
 
       /* init poses array */
-      this.posesDom = {
-        0..5,
-        (0..this.nposes-1)
-      };
+      this.posesDom = { 0..5, (0..this.nposes-1) };
     }
 
     proc load() {
@@ -126,7 +123,7 @@ module Context {
           fetch = available;
         }
         address = 0; // rewind
-        for i in 0..5 {
+        for i in 0..<6 {
           address = i * available * 4;
           for j in 0..(fetch-1) {
             loadDataPiecie(aFile, this.poses(i, cur_poses+j), address, 4);

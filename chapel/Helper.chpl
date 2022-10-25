@@ -24,35 +24,21 @@ module Helper {
   }
 
   /* Load data from file to record array */
-  proc loadData(aFile: file, A: [] ?t, size: int) {
+  proc loadData(aFile: file, ref A: [] ?t, size: int) {
     const n = A.size;
-
-    for i in 0..(n - 1) {
-      try {
-        var r = aFile.reader(kind=iokind.native, start=i * size, end=(i + 1) * size);
-        r.read(A[i]);
-        r.close();
-      } catch {
-        // TODO: fix error
-        // stderr.writeln("Failed to read '", aFile.path, "'");
-        exit(0);
-      }
-    }
+    var readChannel = try! aFile.reader(kind=iokind.native, start=0, end=n*size);
+    try! readChannel.read(A);
+    try! readChannel.close();
   }
 
   /* Load data piece */
   proc loadDataPiecie(aFile: file, ref A: ?t, base: int, offset: int) {
-    try {
-      var r = aFile.reader(kind=iokind.native, start=base, end=base+offset);
-      r.read(A);
-      r.close();
-    } catch {
-      // TODO: fix error
-      try! stderr.writeln("Failed to read '", aFile.path, "'");
-      exit(0);
-    }
+    var r = try! aFile.reader(kind=iokind.native, start=base, end=base+offset);
+    try! r.read(A);
+    try! r.close();
   }
 
+  /* Convert a string to integer */
   proc parseInt(ref x: int, s: string): int {
     try {
       x = s: int;
@@ -60,9 +46,5 @@ module Helper {
       return -1;
     }
     return x;
-  }
-
-  proc dom0(exclusiveUpper: int): domain(1) {
-    return {0..(exclusiveUpper-1)};
   }
 }

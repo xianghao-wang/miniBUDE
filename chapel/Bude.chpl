@@ -45,12 +45,11 @@ module Bude {
     }
 
     var reader = try! ref_energies.reader();
-    for i in dom0(n_ref_poses) {
+    for i in 0..<n_ref_poses {
       try! reader.read(e);
       if (abs(e) < 1.0 && abs(energiesChapel(i)) < 1.0) {
         continue;
       }
-
       diff = abs(e - energiesChapel(i)) / e;
       if (diff > maxdiff) {
         maxdiff = diff;
