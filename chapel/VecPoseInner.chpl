@@ -27,25 +27,28 @@ module VecPoseInner {
     var etot: [0..<WGSIZE] real(32);
 
     // Compute transformation matrix
-    const ix = group*WGSIZE..<(group+1)*WGSIZE;
-    const sx = sin(transforms(0, ix));
-    const cx = cos(transforms(0, ix));
-    const sy = sin(transforms(1, ix));
-    const cy = cos(transforms(1, ix));
-    const sz = sin(transforms(2, ix));
-    const cz = cos(transforms(2, ix));
-    transform(0, 0, 0..<WGSIZE) = cy*cz;
-    transform(0, 1, 0..<WGSIZE) = sx*sy*cz - cx*sz;
-    transform(0, 2, 0..<WGSIZE) = cx*sy*cz + sx*sz;
-    transform(0, 3, 0..<WGSIZE) = transforms(3, ix);
-    transform(1, 0, 0..<WGSIZE) = cy*sz;
-    transform(1, 1, 0..<WGSIZE) = sx*sy*sz + cx*cz;      
-    transform(1, 2, 0..<WGSIZE) = cx*sy*sz - sx*cz;
-    transform(1, 3, 0..<WGSIZE) = transforms(4, ix);
-    transform(2, 0, 0..<WGSIZE) = -sy;
-    transform(2, 1, 0..<WGSIZE) = sx*cy;
-    transform(2, 2, 0..<WGSIZE) = cx*cy;
-    transform(2, 3, 0..<WGSIZE) = transforms(5, ix);
+    foreach i in 0..<WGSIZE {
+      const ix = group*WGSIZE + i;
+      const sx = sin(transforms(0, ix));
+      const cx = cos(transforms(0, ix));
+      const sy = sin(transforms(1, ix));
+      const cy = cos(transforms(1, ix));
+      const sz = sin(transforms(2, ix));
+      const cz = cos(transforms(2, ix));
+      transform(0, 0, i) = cy*cz;
+      transform(0, 1, i) = sx*sy*cz - cx*sz;
+      transform(0, 2, i) = cx*sy*cz + sx*sz;
+      transform(0, 3, i) = transforms(3, ix);
+      transform(1, 0, i) = cy*sz;
+      transform(1, 1, i) = sx*sy*sz + cx*cz;      
+      transform(1, 2, i) = cx*sy*sz - sx*cz;
+      transform(1, 3, i) = transforms(4, ix);
+      transform(2, 0, i) = -sy;
+      transform(2, 1, i) = sx*cy;
+      transform(2, 2, i) = cx*cy;
+      transform(2, 3, i) = transforms(5, ix);
+      
+    }
     
 
     foreach il in 0..<natlig {
