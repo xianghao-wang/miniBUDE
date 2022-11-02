@@ -31,7 +31,7 @@ EXE = bude
 
 all: $(EXE)
 
-$(EXE): Bude.chpl Atom.chpl Configuration.chpl Context.chpl FFParams.chpl Helper.chpl VecPoseInner.chpl
+$(EXE): Bude.chpl
 	$(CHPL) $(CFLAGS) Bude.chpl -o $@ $(EXTRA_FLAGS)
 
 clean:
