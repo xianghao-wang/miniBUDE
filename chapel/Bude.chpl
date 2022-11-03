@@ -255,7 +255,7 @@ module Bude {
   }
 
 
-  proc compute(ref results: [] real(32)) {
+  proc compute(results: [] real(32)) {
     writeln("\nRunning Chapel");
 
     var buffer: [0..<params.nposes] real(32);    
@@ -317,11 +317,11 @@ module Bude {
   proc fasten_main(
     natlig: int,
     natpro: int,
-    ref protein: [] atom,
-    ref ligand: [] atom,
-    ref transforms: [] real(32),
-    ref results: [] real(32),
-    ref forcefield: [] ffParams,
+    protein: [] atom,
+    ligand: [] atom,
+    transforms: [] real(32),
+    results: [] real(32),
+    forcefield: [] ffParams,
     group: int) {
 
     var transform: [0..<3, 0..<4, 0..<WGSIZE] real(32);
