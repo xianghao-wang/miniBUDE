@@ -154,7 +154,7 @@ module Bude {
         for i in 0..<6 {
           address = i * available * 4;
           for j in 0..(fetch-1) {
-            this.loadDataPiece(aFile, this.poses(i, cur_poses+j), address, 4);
+            loadDataPiece(aFile, this.poses(i, cur_poses+j), address, 4);
             address += 4;
           }
         }
