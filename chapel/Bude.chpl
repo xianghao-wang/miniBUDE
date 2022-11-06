@@ -325,8 +325,8 @@ module Bude {
     forcefield: [] ffParams,
     group: int) {
 
-    var transform: [0..<3, 0..<4, 0..<WGSIZE] real(32);
-    var etot: [0..<WGSIZE] real(32);
+    var transform: [0..<3, 0..<4, 0..<WGSIZE] real(32) = noinit;
+    var etot: [0..<WGSIZE] real(32) = noinit;
 
     // Compute transformation matrix
     foreach i in 0..<WGSIZE {
@@ -349,6 +349,8 @@ module Bude {
       transform(2, 1, i) = sx*cy;
       transform(2, 2, i) = cx*cy;
       transform(2, 3, i) = transforms(5, ix);
+
+      etot[i] = 0.0;
     }
     
     foreach il in 0..<natlig {
