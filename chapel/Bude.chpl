@@ -359,20 +359,27 @@ module Bude {
       const lhphb_ltz = l_params.hphb < 0.0;
       const lhphb_gtz = l_params.hphb > 0.0;
 
-      var lpos_x = transform(0, 3, 0..<WGSIZE)
-        + l_atom.x * transform(0, 0, 0..<WGSIZE)
-        + l_atom.y * transform(0, 1, 0..<WGSIZE)
-        + l_atom.z * transform(0, 2, 0..<WGSIZE);
+      // Transform ligand atom
+      var lpos_x: [0..WGSIZE] real(32) = noinit;
+      var lpos_y: [0..WGSIZE] real(32) = noinit;
+      var lpos_z: [0..WGSIZE] real(32) = noinit;
 
-      var lpos_y = transform(1, 3, 0..<WGSIZE)
-        + l_atom.x * transform(1, 0, 0..<WGSIZE)
-        + l_atom.y * transform(1, 1, 0..<WGSIZE)
-        + l_atom.z * transform(1, 2, 0..<WGSIZE);
+      foreach l in 0..WGSIZE {
+        lpos_x = transform(0, 3, l)
+          + l_atom.x * transform(0, 0, l)
+          + l_atom.y * transform(0, 1, l)
+          + l_atom.z * transform(0, 2, l);
 
-      var lpos_z = transform(2, 3, 0..<WGSIZE)
-        + l_atom.x * transform(2, 0, 0..<WGSIZE)
-        + l_atom.y * transform(2, 1, 0..<WGSIZE)
-        + l_atom.z * transform(2, 2, 0..<WGSIZE);
+        lpos_y = transform(1, 3, l)
+          + l_atom.x * transform(1, 0, l)
+          + l_atom.y * transform(1, 1, l)
+          + l_atom.z * transform(1, 2, l);
+
+        lpos_z = transform(2, 3, l)
+          + l_atom.x * transform(2, 0, l)
+          + l_atom.y * transform(2, 1, l)
+          + l_atom.z * transform(2, 2, l);
+      }
 
       foreach ip in 0..<natpro {
         const p_atom = protein(ip);
