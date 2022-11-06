@@ -154,7 +154,7 @@ module Bude {
         for i in 0..<6 {
           address = i * available * 4;
           for j in 0..(fetch-1) {
-            loadDataPiece(aFile, this.poses(i, cur_poses+j), address, 4);
+            this.loadDataPiece(aFile, this.poses(i, cur_poses+j), address, 4);
             address += 4;
           }
         }
@@ -167,13 +167,14 @@ module Bude {
     /* Load data from file to record array */
     proc loadData(aFile: file, ref A: [] ?t, size: int) {
       const n = A.size;
-      var readChannel = try! aFile.reader(kind=iokind.native, region=0..n*size);
+      var readChannel = try! aFile.reader(kind=iokind.native, start=0, end=n*size);
       try! readChannel.read(A);
       try! readChannel.close();
     }
 
+    /* Load data piece */
     proc loadDataPiece(aFile: file, ref A: ?t, base: int, offset: int) {
-      var r = try! aFile.reader(kind=iokind.native, region=base..base+offset);
+      var r = try! aFile.reader(kind=iokind.native, start=base, end=base+offset);
       try! r.read(A);
       try! r.close();
     }
