@@ -24,6 +24,8 @@ module Bude {
   const NPNPDIST: real(32) = 5.5;
   const NPPDIST: real(32) = 1.0;
 
+  const WORK_GROUP = 0..<WGSIZE;
+
   record atom {
     var x, y, z: real(32);
     var aType: int(32);
@@ -329,7 +331,7 @@ module Bude {
     var etot: [0..<WGSIZE] real(32) = noinit;
 
     // Compute transformation matrix
-    foreach i in 0..<WGSIZE {
+    foreach i in WORK_GROUP {
       const ix = group*WGSIZE + i;
       const sx = sin(transforms(0, ix));
       const cx = cos(transforms(0, ix));
@@ -364,18 +366,18 @@ module Bude {
       var lpos_y: [0..WGSIZE] real(32) = noinit;
       var lpos_z: [0..WGSIZE] real(32) = noinit;
 
-      foreach l in 0..WGSIZE {
-        lpos_x = transform(0, 3, l)
+      foreach l in WORK_GROUP {
+        lpos_x[l] = transform(0, 3, l)
           + l_atom.x * transform(0, 0, l)
           + l_atom.y * transform(0, 1, l)
           + l_atom.z * transform(0, 2, l);
 
-        lpos_y = transform(1, 3, l)
+        lpos_y[l] = transform(1, 3, l)
           + l_atom.x * transform(1, 0, l)
           + l_atom.y * transform(1, 1, l)
           + l_atom.z * transform(1, 2, l);
 
-        lpos_z = transform(2, 3, l)
+        lpos_z[l] = transform(2, 3, l)
           + l_atom.x * transform(2, 0, l)
           + l_atom.y * transform(2, 1, l)
           + l_atom.z * transform(2, 2, l);
@@ -425,7 +427,7 @@ module Bude {
         const chrg_init = l_params.elsc * p_params.elsc;
         const dslv_init = p_hphb + l_hphb; 
 
-        foreach l in 0..<WGSIZE {
+        foreach l in WORK_GROUP {
           // Calculate distance between atoms
           const x = lpos_x(l) - p_atom.x;
           const y = lpos_y(l) - p_atom.y;
