@@ -1,3 +1,4 @@
+// Use Chapel argument parser
 module Bude {
   use IO;
   use Time;
