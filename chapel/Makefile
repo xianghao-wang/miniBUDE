@@ -5,7 +5,6 @@ SHELL := bash
 MAKEFLAGS += --warn-undefined-variables --no-builtin-rules
 
 WGSIZE = 64
-EXTRA_FLAGS =
 
 MACHINE = $(shell uname -m)
 
@@ -19,8 +18,7 @@ ifeq ($(shell expr $(WGSIZE) \< 32), 1)
    VI = 1
 endif
 
-CFLAGS_CHAPEL = --warnings --fast --no-ieee-float --mllvm "-force-vector-interleave=$(VI)"
-CFLAGS = $(CFLAGS_CHAPEL) -s WGSIZE=$(WGSIZE)
+CHPLFLAGS = --warnings --fast --no-ieee-float --mllvm "-force-vector-interleave=$(VI)" -s WGSIZE=$(WGSIZE)
 CHPL = chpl
 
 # -------
@@ -32,7 +30,7 @@ EXE = bude
 all: $(EXE)
 
 $(EXE): Bude.chpl
-	$(CHPL) $(CFLAGS) Bude.chpl -o $@ $(EXTRA_FLAGS)
+	$(CHPL) $(CHPLFLAGS) Bude.chpl -o $@
 
 clean:
 	rm -f $(EXE)
