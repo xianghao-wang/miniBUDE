@@ -91,6 +91,7 @@ module Bude {
           writeln("  -n  --numposes   N       Compute energies for N poses (default: ", DEFAULT_NPOSES, ")");
           writeln("      --deck       DECK    Use the DECK directory as input deck (default: ", DATA_DIR, ")");
           writeln("");
+          exit(0);
         } else if arg == "--deck" {
           if (i + 1 >= argc) {
             writeln("Invalid deck");
