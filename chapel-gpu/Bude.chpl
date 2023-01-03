@@ -2,6 +2,7 @@ module Bude {
   use IO;
   use Time;
   use AutoMath;
+  use BudeGPU;
 
   config param WGSIZE = 4,
     DEFAULT_ITERS = 8,
@@ -233,7 +234,7 @@ module Bude {
 
     // Compute
     var energiesChapel: [0..<params.nposes] real(32);
-    compute(energiesChapel);
+    compute(here.gpus[0], energiesChapel);
 
     // Validate energies
     var length: int;
@@ -261,22 +262,6 @@ module Bude {
 
     writef("\nLargest difference was %{.###}%%.\n\n", 100 * maxdiff);
   }
-
-  /* Compute results with loaded data */
-  proc compute(results: [] real(32)) {
-
-  }
-
-  /* Core computing function */
-  proc fasten_main(
-    natlig: int,
-    natpro: int,
-    protein: [] atom,
-    ligand: [] atom,
-    transforms: [] real(32),
-    results: [] real(32),
-    forcefield: [] ffParams,
-    group: int) { }
 
   /* Get current time */
   proc timestamp: real(64) {
