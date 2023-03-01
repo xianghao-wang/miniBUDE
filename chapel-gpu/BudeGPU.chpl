@@ -1,29 +1,29 @@
 module BudeGPU {
-  use Bude;
+    use Bude;
 
-  /* Compute results with loaded data */
-  proc compute(device: locale, results: [] real(32)) {
-    writeln("\nRunning Chapel GPU\n");
+    proc compute(device: locale, results: [] real(32)) {
+        // Copy data from host to device
+        on loc {
+            var protein = params.protein;
+            var ligand = params.ligand;
+            var forcefield = params.forcefield;
+            var buffer: [0..<params.nposes] real(32);
+            var poses = params.poses;
 
-    on device {
-      // Copy data to GPU
-      var protein = params.protein;
-      var ligand = params.ligand;
-      var forcefield = params.forcefield;
-      var buffer: [0..<params.nposes] real(32);
-
-      
+            forall ii in params.iterations {
+                foreach jj in 0..<WGSIZE {
+                    fasten_main(
+                        params.natlig,
+                        params.natpro,
+                        params.protein,
+                        params.ligand,
+                        poses,
+                        buffer,
+                        forcefield,
+                        jj
+                    );
+                }
+            }
+        }
     }
-  }
-
-  /* Core computing function */
-  proc fasten_main(
-    natlig: int,
-    natpro: int,
-    protein: [] atom,
-    ligand: [] atom,
-    transforms: [] real(32),
-    results: [] real(32),
-    forcefield: [] ffParams,
-    group: int) { }
 }

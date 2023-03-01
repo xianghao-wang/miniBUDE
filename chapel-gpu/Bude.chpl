@@ -306,7 +306,7 @@ module Bude {
             var etot: [0..<NUM_TD_PER_THREAD] real(32) = noinit;
             var transform: [0..<3, 0..<4, 0..<NUM_TD_PER_THREAD] real(32) = noinit;
 
-            foreach jj in 0..NUM_TD_PER_THREAD {
+            for jj in 0..<NUM_TD_PER_THREAD {
               const ix = ind + jj;
 
               // Compute transformation matrix
