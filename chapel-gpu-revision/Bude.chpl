@@ -2,6 +2,7 @@ module Bude {
   use Context;
   use Time;
   use IO;
+  use Commons;
 
   config param WGSIZE = 4,
     DEFAULT_ITERS = 8,
