@@ -3,6 +3,8 @@ module Bude {
   use Time;
   use IO;
   use Commons;
+  use GpuDiagnostics;
+  use GPU;
 
   config param WGSIZE = 4,
     DEFAULT_ITERS = 8,
@@ -116,6 +118,12 @@ module Bude {
       var poses = params.poses;
       var buffer: [0..<params.nposes] real(32);
 
+      const iterations = params.iterations;
+      const nposes = params.nposes;
+      const natlig = params.natlig;
+      const natpro = params.natpro;
+      const _NUM_TD_PER_THREAD = NUM_TD_PER_THREAD;
+
       if (DEBUG) {
         writeln("");
         writeln("===== Compute DEBUG START =====");
@@ -125,19 +133,23 @@ module Bude {
       }
 
       const start = timestamp();
-      for itr in 0..<params.iterations {
+      for itr in 0..<iterations {
 
         if (DEBUG) {
           writeln("Iteration:", itr);
         }
+        
+        writeln(NPNPDIST.locale);
 
         // fasten_main
-        forall ii in 0..<params.nposes/NUM_TD_PER_THREAD {
-          const ind = ii * NUM_TD_PER_THREAD;
-          var etot: [0..<NUM_TD_PER_THREAD] real(32) = noinit;
-          var transform: [0..<NUM_TD_PER_THREAD, 0..<3, 0..<4] real(32) = noinit;
+        foreach ii in 0..<nposes/_NUM_TD_PER_THREAD {
+          // assertOnGpu();
+          const ind = ii * _NUM_TD_PER_THREAD;
+          var etot: [0..<_NUM_TD_PER_THREAD] real(32) = noinit;
+          var transform: [0..<_NUM_TD_PER_THREAD, 0..<3, 0..<4] real(32) = noinit;
 
-          for jj in 0..<NUM_TD_PER_THREAD {
+          for jj in 0..<_NUM_TD_PER_THREAD {
+              // assertOnGpu();
               const ix = ind + jj;
               // Compute transformation matrix
               const sx = sin(poses(0, ix));
@@ -159,20 +171,21 @@ module Bude {
               transform(jj, 2, 2) = cx*cy;
               transform(jj, 2, 3) = poses(5, ix);
               etot[jj] = 0.0;
-          } // for jj in 0..<NUM_TD_PER_THREAD
+          } // for jj in 0..<_NUM_TD_PER_THREAD
 
-          for il in 0..<params.natlig {
+          for il in 0..<natlig {
+              // assertOnGpu();
               const l_atom = ligand[il];
               const l_params = forcefield[l_atom.aType];
               const lhphb_ltz = l_params.hphb < 0.0;
               const lhphb_gtz = l_params.hphb > 0.0;
 
               // Transform ligand atom
-              var lpos_x: [0..<NUM_TD_PER_THREAD] real(32) = noinit;
-              var lpos_y: [0..<NUM_TD_PER_THREAD] real(32) = noinit;
-              var lpos_z: [0..<NUM_TD_PER_THREAD] real(32) = noinit;
+              var lpos_x: [0..<_NUM_TD_PER_THREAD] real(32) = noinit;
+              var lpos_y: [0..<_NUM_TD_PER_THREAD] real(32) = noinit;
+              var lpos_z: [0..<_NUM_TD_PER_THREAD] real(32) = noinit;
 
-              for jj in 0..<NUM_TD_PER_THREAD {
+              for jj in 0..<_NUM_TD_PER_THREAD {
                 lpos_x[jj] = transform(jj, 0, 3)
                   + l_atom.x * transform(jj, 0, 0)
                   + l_atom.y * transform(jj, 0, 1)
@@ -187,9 +200,10 @@ module Bude {
                   + l_atom.x * transform(jj, 2, 0)
                   + l_atom.y * transform(jj, 2, 1)
                   + l_atom.z * transform(jj, 2, 2);
-              } // foreach jj in 0..<NUM_TD_PER_THREAD
+              } // foreach jj in 0..<_NUM_TD_PER_THREAD
 
-              for ip in 0..< params.natpro {
+              for ip in 0..< natpro {
+                // assertOnGpu();
                 const p_atom = protein[ip];
                 const p_params = forcefield[p_atom.aType];
 
@@ -233,7 +247,8 @@ module Bude {
                 const chrg_init = l_params.elsc * p_params.elsc;
                 const dslv_init = p_hphb + l_hphb; 
                 
-                for jj in 0..<NUM_TD_PER_THREAD {
+                for jj in 0..<_NUM_TD_PER_THREAD {
+                  // assertOnGpu();
                   const x = lpos_x[jj] - p_atom.x;
                   const y = lpos_y[jj] - p_atom.y;
                   const z = lpos_z[jj] - p_atom.z;
@@ -266,10 +281,11 @@ module Bude {
 
                   dslv_e *= if zone1 then 1.0: real(32) else coeff;
                   etot[jj] += dslv_e;                  
-                } // foreach jj in 0..<NUM_TD_PER_THREAD
+                } // foreach jj in 0..<_NUM_TD_PER_THREAD
               } // foreach ip in 0..< params.natpro
           } // foreach il in 0..<params.natlig
-          for jj in 0..<NUM_TD_PER_THREAD {
+          for jj in 0..<_NUM_TD_PER_THREAD {
+            // assertOnGpu();
             buffer[ind+jj] = etot[jj] * 0.5;
           }
         } // foreach ii in 0..<params.nposes/NUM_TD_PER_THREAD
