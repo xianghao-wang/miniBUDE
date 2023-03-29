@@ -31,19 +31,21 @@ module Context {
       const argc = args.size;
       var arg: string;
 
-      var t_deckDir = DATA_DIR;
+      var _deckDir = DATA_DIR;
+      var _iterations = DEFAULT_ITERS;
+      var _nposes = DEFAULT_NPOSES;
 
       var i = 1;
       while i < argc {
         arg = args[i];
         if arg == "--iterations" || arg == "-i" {
-          if i + 1 >= argc || parseInt(this.iterations, args[i+1]) < 0 {
+          if i + 1 >= argc || parseInt(_iterations, args[i+1]) < 0 {
             writeln("Invalid number of iterations");
             exit(1);
           }
           i += 1;
         } else if arg == "--numposes" || arg == "-n" {
-          if i + 1 >= argc || parseInt(this.nposes, args[i+1]) < 0 {
+          if i + 1 >= argc || parseInt(_nposes, args[i+1]) < 0 {
             writeln("Invalid number of poses");
             exit(1);
           }
@@ -63,7 +65,7 @@ module Context {
             writeln("Invalid deck");
             exit(1);
           }
-          t_deckDir = args[i + 1];
+          _deckDir = args[i + 1];
           i += 1;
         } else {
           writeln("Unrecognized argument '", arg, "' (try '--help')\n");
@@ -72,7 +74,12 @@ module Context {
         i += 1;
       }
 
-      this.deckDir = t_deckDir;
+      this.iterations = _iterations;
+      this.nposes = _nposes;
+      this.deckDir = _deckDir;
+
+
+      this.deckDir = _deckDir;
       var length: int;
       var aFile: file;
 

@@ -28,7 +28,7 @@ module Bude {
   const NPNPDIST: real(32) = 5.5;
   const NPPDIST: real(32) = 1.0;
   
-  config param NUM_TD_PER_THREAD = 256;
+  config param NUM_TD_PER_THREAD = 16;
 
   record atom {
     var x, y, z: real(32);
@@ -114,6 +114,7 @@ module Bude {
       var ligand = params.ligand;
       var forcefield = params.forcefield;
       var poses = params.poses;
+      var buffer: [0..<params.nposes] real(32);
 
       if (DEBUG) {
         writeln("");
@@ -132,12 +133,9 @@ module Bude {
 
         // fasten_main
         forall ii in 0..<params.nposes/NUM_TD_PER_THREAD {
-          if (DEBUG) {
-            writeln("   CUDA Thread:", ii);
-          }
           const ind = ii * NUM_TD_PER_THREAD;
           var etot: [0..<NUM_TD_PER_THREAD] real(32) = noinit;
-          var transform: [0..<3, 0..<4, 0..<NUM_TD_PER_THREAD] real(32) = noinit;
+          var transform: [0..<NUM_TD_PER_THREAD, 0..<3, 0..<4] real(32) = noinit;
 
           for jj in 0..<NUM_TD_PER_THREAD {
               const ix = ind + jj;
@@ -272,7 +270,7 @@ module Bude {
               } // foreach ip in 0..< params.natpro
           } // foreach il in 0..<params.natlig
           for jj in 0..<NUM_TD_PER_THREAD {
-            results[ind+jj] = etot[jj] * 0.5;
+            buffer[ind+jj] = etot[jj] * 0.5;
           }
         } // foreach ii in 0..<params.nposes/NUM_TD_PER_THREAD
         // Copy results from device to host
@@ -281,7 +279,8 @@ module Bude {
       const end = timestamp();
       printTimings(start, end);
 
-    } // on
+      results = buffer;
+    } // on  
   } // main
 
   proc timestamp(): real(64) {
