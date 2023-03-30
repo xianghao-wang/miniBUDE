@@ -6,21 +6,18 @@ module Bude {
   use GpuDiagnostics;
   use GPU;
 
-  config param WGSIZE = 4,
-    DEFAULT_ITERS = 8,
-    DEFAULT_NPOSES = 65536,
-    REF_NPOSES = 65536,
-    DATA_DIR = "../data/bm1",
-    FILE_LIGAND = "/ligand.in",
-    FILE_PROTEIN = "/protein.in",
-    FILE_FORCEFIELD = "/forcefield.in",
-    FILE_POSES = "/poses.in",
-    FILE_REF_ENERGIES = "/ref_energies.out",
-    ATOM_SIZE = 16,
-    FFPARAMS_SIZE = 16;
-
-  // Debug only
-  config const DEBUG = false;
+  param NUM_TD_PER_THREAD = 1;
+  param DEFAULT_ITERS = 8,
+  param DEFAULT_NPOSES = 65536,
+  param REF_NPOSES = 65536,
+  param DATA_DIR = "../data/bm1",
+  param FILE_LIGAND = "/ligand.in",
+  param FILE_PROTEIN = "/protein.in",
+  param FILE_FORCEFIELD = "/forcefield.in",
+  param FILE_POSES = "/poses.in",
+  param FILE_REF_ENERGIES = "/ref_energies.out",
+  param ATOM_SIZE = 16,
+  param FFPARAMS_SIZE = 16;
 
   // Energy evaluation parameters
   const CNSTNT: real(32) = 45.0;
@@ -30,7 +27,6 @@ module Bude {
   const NPNPDIST: real(32) = 5.5;
   const NPPDIST: real(32) = 1.0;
   
-  config param NUM_TD_PER_THREAD = 1;
 
   record atom {
     var x, y, z: real(32);
@@ -57,26 +53,6 @@ module Bude {
     writeln("Ligands   : ", params.natlig);
     writeln("Proteins  : ", params.natpro);
     writeln("Deck      : ", params.deckDir);
-
-    // Debug information
-    if (DEBUG) {
-      const posesSize = params.nposes * 16 / 1000.0;
-      const ligSize = params.natlig * 16 / 1000.0;
-      const proSize = params.natpro * 16 / 1000.0;
-      const forcefieldSize = params.ntypes * 16 / 1000.0;
-
-      writeln("");
-      writeln("===== Initiation DEBUG START =====");
-      writeln("Memory Usage");
-      writeln("   Poses     : ", posesSize, " KB");
-      writeln("   Ligands   : ", ligSize, " KB");
-      writeln("   Proteins  : ", proSize, " KB");
-      writeln("   Field     : ", forcefieldSize, " KB");
-      writeln("   Total     : ", posesSize + ligSize + proSize + forcefieldSize, " KB");
-      writeln("Locale: ", params.poses.locale);
-      writeln("===== Initiation DEBUG END   =====");
-      writeln("");
-    }
 
     // Compute
     var energiesChapel: [0..<params.nposes] real(32);
@@ -123,30 +99,15 @@ module Bude {
       const natlig = params.natlig;
       const natpro = params.natpro;
 
-      if (DEBUG) {
-        writeln("");
-        writeln("===== Compute DEBUG START =====");
-        writeln("Locale: ", poses.locale);
-        writeln("===== Compute DEBUG END   =====");
-        writeln("");
-      }
-
       const start = timestamp();
       for itr in 0..<iterations {
-
-        // if (DEBUG) {
-        //   writeln("Iteration:", itr);
-        // }
-
         // fasten_main
         foreach ii in 0..<nposes/NUM_TD_PER_THREAD {
-          // assertOnGpu();
           const ind = ii * NUM_TD_PER_THREAD;
           var etot: NUM_TD_PER_THREAD * real(32);
           var transform: NUM_TD_PER_THREAD * (3 * (4 * real(32)));
 
           for jj in 0..<NUM_TD_PER_THREAD {
-              // assertOnGpu();
               const ix = ind + jj;
               // Compute transformation matrix
               const sx = sin(poses(0, ix));
@@ -171,7 +132,6 @@ module Bude {
           } // for jj in 0..<NUM_TD_PER_THREAD
 
           for il in 0..<natlig {
-              // assertOnGpu();
               const l_atom = ligand[il];
               const l_params = forcefield[l_atom.aType];
               const lhphb_ltz = l_params.hphb < 0.0;
@@ -200,7 +160,6 @@ module Bude {
               } // foreach jj in 0..<NUM_TD_PER_THREAD
 
               for ip in 0..< natpro {
-                // assertOnGpu();
                 const p_atom = protein[ip];
                 const p_params = forcefield[p_atom.aType];
 
@@ -245,7 +204,6 @@ module Bude {
                 const dslv_init = p_hphb + l_hphb; 
                 
                 for jj in 0..<NUM_TD_PER_THREAD {
-                  // assertOnGpu();
                   const x = lpos_x[jj] - p_atom.x;
                   const y = lpos_y[jj] - p_atom.y;
                   const z = lpos_z[jj] - p_atom.z;
