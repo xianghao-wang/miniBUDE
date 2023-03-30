@@ -7,17 +7,18 @@ module Bude {
   use GPU;
 
   param NUM_TD_PER_THREAD = 1;
-  param DEFAULT_ITERS = 8,
-  param DEFAULT_NPOSES = 65536,
-  param REF_NPOSES = 65536,
-  param DATA_DIR = "../data/bm1",
-  param FILE_LIGAND = "/ligand.in",
-  param FILE_PROTEIN = "/protein.in",
-  param FILE_FORCEFIELD = "/forcefield.in",
-  param FILE_POSES = "/poses.in",
-  param FILE_REF_ENERGIES = "/ref_energies.out",
-  param ATOM_SIZE = 16,
+  param DEFAULT_ITERS = 8;
+  param DEFAULT_NPOSES = 65536;
+  param REF_NPOSES = 65536;
+  param DATA_DIR = "../data/bm1";
+  param FILE_LIGAND = "/ligand.in";
+  param FILE_PROTEIN = "/protein.in";
+  param FILE_FORCEFIELD = "/forcefield.in";
+  param FILE_POSES = "/poses.in";
+  param FILE_REF_ENERGIES = "/ref_energies.out";
+  param ATOM_SIZE = 16;
   param FFPARAMS_SIZE = 16;
+  param WGSIZE = 16;
 
   // Energy evaluation parameters
   const CNSTNT: real(32) = 45.0;
