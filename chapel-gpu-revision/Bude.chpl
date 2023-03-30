@@ -30,7 +30,7 @@ module Bude {
   const NPNPDIST: real(32) = 5.5;
   const NPPDIST: real(32) = 1.0;
   
-  config param NUM_TD_PER_THREAD = 16;
+  config param NUM_TD_PER_THREAD = 1;
 
   record atom {
     var x, y, z: real(32);
@@ -134,13 +134,13 @@ module Bude {
       const start = timestamp();
       for itr in 0..<iterations {
 
-        if (DEBUG) {
-          writeln("Iteration:", itr);
-        }
+        // if (DEBUG) {
+        //   writeln("Iteration:", itr);
+        // }
 
         // fasten_main
         foreach ii in 0..<nposes/NUM_TD_PER_THREAD {
-          assertOnGpu();
+          // assertOnGpu();
           const ind = ii * NUM_TD_PER_THREAD;
           var etot: NUM_TD_PER_THREAD * real(32);
           var transform: NUM_TD_PER_THREAD * (3 * (4 * real(32)));
