@@ -122,7 +122,6 @@ module Bude {
       const nposes = params.nposes;
       const natlig = params.natlig;
       const natpro = params.natpro;
-      const _NUM_TD_PER_THREAD = NUM_TD_PER_THREAD;
 
       if (DEBUG) {
         writeln("");
@@ -138,17 +137,15 @@ module Bude {
         if (DEBUG) {
           writeln("Iteration:", itr);
         }
-        
-        writeln(NPNPDIST.locale);
 
         // fasten_main
-        foreach ii in 0..<nposes/_NUM_TD_PER_THREAD {
-          // assertOnGpu();
-          const ind = ii * _NUM_TD_PER_THREAD;
-          var etot: [0..<_NUM_TD_PER_THREAD] real(32) = noinit;
-          var transform: [0..<_NUM_TD_PER_THREAD, 0..<3, 0..<4] real(32) = noinit;
+        foreach ii in 0..<nposes/NUM_TD_PER_THREAD {
+          assertOnGpu();
+          const ind = ii * NUM_TD_PER_THREAD;
+          var etot: NUM_TD_PER_THREAD * real(32);
+          var transform: NUM_TD_PER_THREAD * (3 * (4 * real(32)));
 
-          for jj in 0..<_NUM_TD_PER_THREAD {
+          for jj in 0..<NUM_TD_PER_THREAD {
               // assertOnGpu();
               const ix = ind + jj;
               // Compute transformation matrix
@@ -158,20 +155,20 @@ module Bude {
               const cy = cos(poses(1, ix));
               const sz = sin(poses(2, ix));
               const cz = cos(poses(2, ix));
-              transform(jj, 0, 0) = cy*cz;
-              transform(jj, 0, 1) = sx*sy*cz - cx*sz;
-              transform(jj, 0, 2) = cx*sy*cz + sx*sz;
-              transform(jj, 0, 3) = poses(3, ix);
-              transform(jj, 1, 0) = cy*sz;
-              transform(jj, 1, 1) = sx*sy*sz + cx*cz;      
-              transform(jj, 1, 2) = cx*sy*sz - sx*cz;
-              transform(jj, 1, 3) = poses(4, ix);
-              transform(jj, 2, 0) = -sy;
-              transform(jj, 2, 1) = sx*cy;
-              transform(jj, 2, 2) = cx*cy;
-              transform(jj, 2, 3) = poses(5, ix);
+              transform(jj)(0)(0) = cy*cz;
+              transform(jj)(0)(1) = sx*sy*cz - cx*sz;
+              transform(jj)(0)(2) = cx*sy*cz + sx*sz;
+              transform(jj)(0)(3) = poses(3, ix);
+              transform(jj)(1)(0) = cy*sz;
+              transform(jj)(1)(1) = sx*sy*sz + cx*cz;      
+              transform(jj)(1)(2) = cx*sy*sz - sx*cz;
+              transform(jj)(1)(3) = poses(4, ix);
+              transform(jj)(2)(0) = -sy;
+              transform(jj)(2)(1) = sx*cy;
+              transform(jj)(2)(2) = cx*cy;
+              transform(jj)(2)(3) = poses(5, ix);
               etot[jj] = 0.0;
-          } // for jj in 0..<_NUM_TD_PER_THREAD
+          } // for jj in 0..<NUM_TD_PER_THREAD
 
           for il in 0..<natlig {
               // assertOnGpu();
@@ -181,26 +178,26 @@ module Bude {
               const lhphb_gtz = l_params.hphb > 0.0;
 
               // Transform ligand atom
-              var lpos_x: [0..<_NUM_TD_PER_THREAD] real(32) = noinit;
-              var lpos_y: [0..<_NUM_TD_PER_THREAD] real(32) = noinit;
-              var lpos_z: [0..<_NUM_TD_PER_THREAD] real(32) = noinit;
+              var lpos_x: NUM_TD_PER_THREAD * real(32);
+              var lpos_y: NUM_TD_PER_THREAD * real(32);
+              var lpos_z: NUM_TD_PER_THREAD * real(32);
 
-              for jj in 0..<_NUM_TD_PER_THREAD {
-                lpos_x[jj] = transform(jj, 0, 3)
-                  + l_atom.x * transform(jj, 0, 0)
-                  + l_atom.y * transform(jj, 0, 1)
-                  + l_atom.z * transform(jj, 0, 2);
+              for jj in 0..<NUM_TD_PER_THREAD {
+                lpos_x[jj] = transform(jj)(0)(3)
+                  + l_atom.x * transform(jj)(0)(0)
+                  + l_atom.y * transform(jj)(0)(1)
+                  + l_atom.z * transform(jj)(0)(2);
 
-                lpos_y[jj] = transform(jj, 1, 3)
-                  + l_atom.x * transform(jj, 1, 0)
-                  + l_atom.y * transform(jj, 1, 1)
-                  + l_atom.z * transform(jj, 1, 2);
+                lpos_y[jj] = transform(jj)(1)(3)
+                  + l_atom.x * transform(jj)(1)(0)
+                  + l_atom.y * transform(jj)(1)(1)
+                  + l_atom.z * transform(jj)(1)(2);
 
-                lpos_z[jj] = transform(jj, 2, 3)
-                  + l_atom.x * transform(jj, 2, 0)
-                  + l_atom.y * transform(jj, 2, 1)
-                  + l_atom.z * transform(jj, 2, 2);
-              } // foreach jj in 0..<_NUM_TD_PER_THREAD
+                lpos_z[jj] = transform(jj)(2)(3)
+                  + l_atom.x * transform(jj)(2)(0)
+                  + l_atom.y * transform(jj)(2)(1)
+                  + l_atom.z * transform(jj)(2)(2);
+              } // foreach jj in 0..<NUM_TD_PER_THREAD
 
               for ip in 0..< natpro {
                 // assertOnGpu();
@@ -247,7 +244,7 @@ module Bude {
                 const chrg_init = l_params.elsc * p_params.elsc;
                 const dslv_init = p_hphb + l_hphb; 
                 
-                for jj in 0..<_NUM_TD_PER_THREAD {
+                for jj in 0..<NUM_TD_PER_THREAD {
                   // assertOnGpu();
                   const x = lpos_x[jj] - p_atom.x;
                   const y = lpos_y[jj] - p_atom.y;
@@ -281,10 +278,10 @@ module Bude {
 
                   dslv_e *= if zone1 then 1.0: real(32) else coeff;
                   etot[jj] += dslv_e;                  
-                } // foreach jj in 0..<_NUM_TD_PER_THREAD
+                } // foreach jj in 0..<NUM_TD_PER_THREAD
               } // foreach ip in 0..< params.natpro
           } // foreach il in 0..<params.natlig
-          for jj in 0..<_NUM_TD_PER_THREAD {
+          for jj in 0..<NUM_TD_PER_THREAD {
             // assertOnGpu();
             buffer[ind+jj] = etot[jj] * 0.5;
           }
