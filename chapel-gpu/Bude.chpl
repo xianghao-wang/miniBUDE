@@ -4,6 +4,7 @@ module Bude {
   use GPU;
   use CTypes;
   use ArgumentParser;
+  use Path;
 
   param DEFAULT_ITERS = 8;
   param DEFAULT_NPOSES = 65536;
@@ -42,7 +43,7 @@ module Bude {
     var forcefield: [forcefieldDomain] ffParams;
     var poses: [posesDomain] real(32);
 
-    proc init() {  }
+    proc init() { }
 
     proc load(args: [] string) throws {
       // Parsing command-line parameters
@@ -80,6 +81,56 @@ module Bude {
       }
       
       this.deckDir = deckArg.value(); 
+      
+      // Load data
+      var length: int;
+      var aFile: file;
+      var reader: fileReader();
+      
+      // Read ligand
+      aFile = openFile(this.deckDir + FILE_LIGAND, length);
+      this.natlig = length / c_sizeof(atom): int;
+      this.ligandDomain = {0..<this.natlig};
+      reader = aFile.reader(kind=iokind.native, region=0..);
+      reader.read(this.ligand);
+      reader.close(); aFile.close();
+
+      // Read protein
+      aFile = openFile(this.deckDir + FILE_PROTEIN, length);
+      this.natpro = length / c_sizeof(atom): int;
+      this.proteinDomain = {0..<this.natpro};
+      reader = aFile.reader(kind=iokind.native, region=0..);
+      reader.read(this.protein);
+      reader.close(); aFile.close();
+
+      // Read force field
+      aFile = openFile(this.deckDir + FILE_FORCEFIELD, length);
+      this.ntypes = length / c_sizeof(ffParams): int;
+      this.forcefieldDomain = {0..<this.ntypes};
+      reader = aFile.reader(kind=iokind.native, region=0..);
+      reader.read(this.forcefield);
+      reader.close(); aFile.close();
+
+      // Read poses
+      this.posesDomain = {0..<6, 0..<this.nposes};
+      aFile = openFile(this.deckDir + FILE_POSES, length);
+      var available = length / (6 * c_sizeof(real(32)): int);
+      var current = 0;
+      while (current < this.nposes) {
+        var fetch = this.nposes - current;
+        if (fetch > available) then fetch = available;
+
+        for i in 0..<6 {
+          const base = i*available*c_sizeof(real(32)):int;
+          const amount = fetch*c_sizeof(real(32)):int;
+          reader = aFile.reader(kind=iokind.native, region=base..base+amount);
+          reader.read(this.poses(i, current));
+          reader.close();
+        }
+        current += fetch;
+      }
+      this.nposes = current;
+      aFile.close();
     }
   }
 
@@ -88,5 +139,16 @@ module Bude {
     try! context.load(args);
 
     delete context;
+  }
+
+  proc openFile(fileName: string, ref length: int): file {
+    try {
+      const aFile = open(fileName, ioMode.r);
+      length = aFile.size;
+      return aFile;
+    } catch {
+      try! stderr.writeln("Failed to open '", fileName, "'");
+      exit(0);
+    }
   }
 }
