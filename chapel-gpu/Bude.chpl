@@ -114,6 +114,7 @@ module Bude {
       // Read poses
       this.posesDomain = {0..<6, 0..<this.nposes};
       aFile = openFile(this.deckDir + FILE_POSES, length);
+      reader = aFile.reader(kind=iokind.native, region=0.., locking=false);
       var available = length / (6 * c_sizeof(real(32)): int);
       var current = 0;
       while (current < this.nposes) {
@@ -123,14 +124,13 @@ module Bude {
         for i in 0..<6 {
           const base = i*available*c_sizeof(real(32)):int;
           const amount = fetch*c_sizeof(real(32)):int;
-          reader = aFile.reader(kind=iokind.native, region=base..base+amount);
+          reader.seek(region=base..<base+amount);
           reader.read(this.poses(i, current));
-          reader.close();
         }
         current += fetch;
       }
       this.nposes = current;
-      aFile.close();
+      reader.close(); aFile.close();
     }
   }
 
