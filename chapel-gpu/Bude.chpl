@@ -211,7 +211,7 @@ module Bude {
           var etot: NUM_TD_PER_THREAD * real(32);
           var transform: NUM_TD_PER_THREAD * (3 * (4 * real(32)));
 
-          for jj in 0..<NUM_TD_PER_THREAD {
+          for param jj in 0..<NUM_TD_PER_THREAD {
               const ix = ind + jj;
               // Compute transformation matrix
               const sx = sin(poses(0, ix));
@@ -246,7 +246,7 @@ module Bude {
               var lpos_y: NUM_TD_PER_THREAD * real(32);
               var lpos_z: NUM_TD_PER_THREAD * real(32);
 
-              for jj in 0..<NUM_TD_PER_THREAD {
+              for param jj in 0..<NUM_TD_PER_THREAD {
                 lpos_x[jj] = transform(jj)(0)(3)
                   + l_atom.x * transform(jj)(0)(0)
                   + l_atom.y * transform(jj)(0)(1)
@@ -307,7 +307,7 @@ module Bude {
                 const chrg_init = l_params.elsc * p_params.elsc;
                 const dslv_init = p_hphb + l_hphb; 
                 
-                for jj in 0..<NUM_TD_PER_THREAD {
+                for param jj in 0..<NUM_TD_PER_THREAD {
                   const x = lpos_x[jj] - p_atom.x;
                   const y = lpos_y[jj] - p_atom.y;
                   const z = lpos_z[jj] - p_atom.z;
