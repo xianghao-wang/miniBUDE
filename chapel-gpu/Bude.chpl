@@ -9,6 +9,7 @@ module Bude {
   // Program context parameters
   param DEFAULT_ITERS = 8;
   param DEFAULT_NPOSES = 65536;
+  param DEFAULT_WGSIZE = 64;
   param REF_NPOSES = 65536;
   param DATA_DIR = "../data/bm1";
   param FILE_LIGAND = "/ligand.in";
@@ -27,7 +28,6 @@ module Bude {
 
   // Configurations
   config param NUM_TD_PER_THREAD: int = 4; // Work per core
-  config var wgsize: int = 64; // Block size
 
   record atom {
     var x, y, z: real(32);
@@ -45,6 +45,7 @@ module Bude {
     var deckDir: string;
     var iterations: int;
     var natlig, natpro, ntypes, nposes: int;
+    var wgsize: int;
 
     var proteinDomain: domain(1);
     var ligandDomain: domain(1);
@@ -76,6 +77,11 @@ module Bude {
         , defaultValue=DEFAULT_NPOSES: string
         , valueName="N"
         , help="Compute energies for N poses (default: " + DEFAULT_NPOSES: string + ")");
+      var wgsizeArg = parser.addOption(name="wgsize"
+        , opts=["-w", "--wgsize"]
+        , defaultValue=DEFAULT_WGSIZE: string
+        , valueName="W"
+        , help="Set the number of blocks to W (default: " + DEFAULT_WGSIZE: string + ")");
       parser.parseArgs(args);
 
       // Store these parameters
@@ -91,6 +97,13 @@ module Bude {
         if (this.nposes < 0) then throw new Error();
       } catch {
         writeln("Invalid number of poses");
+      }
+
+      try {
+        this.wgsize = wgsizeArg.value(): int;
+        if (this.wgsize < 0) then throw new Error();
+      } catch {
+        writeln("Invalid number of blocks");
       }
       
       this.deckDir = deckArg.value(); 
@@ -204,6 +217,7 @@ module Bude {
       const nposes = context.nposes;
       const natlig = context.natlig;
       const natpro = context.natpro;
+      const wgsize = context.wgsize;
 
       const start = timestampMS();
       for itr in 0..<iterations {
