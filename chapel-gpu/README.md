@@ -15,6 +15,6 @@ make
 
 ## Running
 ```
-./bude --wgsize=64
+./bude -w=64
 ```
 This implementation sets the number of blocks on GPU by passing `--wgsize`. The `-n` and `-i` parameters are available. Run bude `-h` for a help message.
