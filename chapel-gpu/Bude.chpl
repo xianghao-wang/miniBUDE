@@ -27,6 +27,7 @@ module Bude {
 
   // Configurations
   config param NUM_TD_PER_THREAD: int = 4; // Work per core
+  config param WGSIZE: int = 64; // Block size
 
   record atom {
     var x, y, z: real(32);
@@ -189,8 +190,9 @@ module Bude {
   }
 
  proc compute(results: [] real(32)) {
-    writeln("\nRunning on GPU");
     on here.gpus[0] {
+      writeln("\nRunning on GPU");
+
       // Copy data to device
       var protein = context.protein;
       var ligand = context.ligand;
@@ -207,6 +209,7 @@ module Bude {
       for itr in 0..<iterations {
         // fasten_main
         foreach ii in 0..<nposes/NUM_TD_PER_THREAD {
+          __primitive("gpu set blockSize", WGSIZE);
           const ind = ii * NUM_TD_PER_THREAD;
           var etot: NUM_TD_PER_THREAD * real(32);
           var transform: NUM_TD_PER_THREAD * (3 * (4 * real(32)));
@@ -343,8 +346,7 @@ module Bude {
                 } // foreach jj in 0..<NUM_TD_PER_THREAD
               } // foreach ip in 0..< context.natpro
           } // foreach il in 0..<context.natlig
-          for jj in 0..<NUM_TD_PER_THREAD {
-            // assertOnGpu();
+          for param jj in 0..<NUM_TD_PER_THREAD {
             buffer[ind+jj] = etot[jj] * 0.5;
           }
         } // foreach ii in 0..<context.nposes/NUM_TD_PER_THREAD
