@@ -27,7 +27,7 @@ module Bude {
 
   // Configurations
   config param NUM_TD_PER_THREAD: int = 4; // Work per core
-  config param WGSIZE: int = 64; // Block size
+  config var wgsize: int = 64; // Block size
 
   record atom {
     var x, y, z: real(32);
@@ -209,7 +209,7 @@ module Bude {
       for itr in 0..<iterations {
         // fasten_main
         foreach ii in 0..<nposes/NUM_TD_PER_THREAD {
-          __primitive("gpu set blockSize", WGSIZE);
+          __primitive("gpu set blockSize", wgsize);
           const ind = ii * NUM_TD_PER_THREAD;
           var etot: NUM_TD_PER_THREAD * real(32);
           var transform: NUM_TD_PER_THREAD * (3 * (4 * real(32)));
