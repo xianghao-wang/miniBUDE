@@ -398,10 +398,6 @@ module Bude {
     const flops = total_ops / runtime;
     const gflops = flops / 1e9;
 
-    const total_finsts = 25.0 * context.natpro * context.natlig * context.nposes;
-    const finsts = total_finsts / runtime;
-    const gfinsts = finsts / 1e9;
-
     const interactions = 1.0 * context.nposes * context.natlig * context.natpro;
     const interactions_per_sec = interactions / runtime;
 
@@ -410,6 +406,5 @@ module Bude {
     writef("- Average time:   %7.3dr ms\n", ms);
     writef("- Interactions/s: %7.3dr billion\n", (interactions_per_sec / 1e9));
     writef("- GFLOP/s:        %7.3dr\n", gflops);
-    writef("- GFInst/s:       %7.3dr\n", gfinsts);
   }
 }
