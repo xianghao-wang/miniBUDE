@@ -10,6 +10,7 @@ module Bude {
   param DEFAULT_ITERS = 8;
   param DEFAULT_NPOSES = 65536;
   param DEFAULT_WGSIZE = 64;
+  param DEFAULT_NGPU = 2;
   param REF_NPOSES = 65536;
   param DATA_DIR = "../data/bm1";
   param FILE_LIGAND = "/ligand.in";
@@ -46,6 +47,7 @@ module Bude {
     var iterations: int;
     var natlig, natpro, ntypes, nposes: int;
     var wgsize: int;
+    var ngpu: int;
 
     var proteinDomain: domain(1);
     var ligandDomain: domain(1);
@@ -82,6 +84,11 @@ module Bude {
         , defaultValue=DEFAULT_WGSIZE: string
         , valueName="W"
         , help="Set the number of blocks to W (default: " + DEFAULT_WGSIZE: string + ")");
+      var ngpuArg = parser.addOption(name="ngpu"
+        , opts=["--ngpu"]
+        , defaultValue=DEFAULT_NGPU: string
+        , valueName="NG"
+        , help="Set the number of GPUs (default: " + DEFAULT_NGPU: string + ")");
       parser.parseArgs(args);
 
       // Store these parameters
@@ -104,6 +111,13 @@ module Bude {
         if (this.wgsize < 0) then throw new Error();
       } catch {
         writeln("Invalid number of blocks");
+      }
+
+      try {
+        this.ngpu = ngpuArg.value(): int;
+        if (this.ngpu < 1 || this.ngpu > here.gpus.size) then throw new Error();
+      } catch {
+        writeln("Invalid number of GPUs (1<=ngpu<=" + here.gpus.size: string + ")");
       }
       
       this.deckDir = deckArg.value(); 
@@ -203,12 +217,10 @@ module Bude {
   }
 
   proc compute(results: [] real(32)) {
-    const nGPU = here.gpus.size;
-
-    var times: [0..<nGPU] real;
+    var times: [0..<context.ngpu] real;
     coforall (gpu, gpuID) in zip(here.gpus, here.gpus.domain) do on gpu {
       const iterations = context.iterations;
-      const nposes = context.nposes / nGPU;
+      const nposes = context.nposes / context.ngpu;
       const natlig = context.natlig;
       const natpro = context.natpro;
       const wgsize = context.wgsize;
