@@ -97,6 +97,7 @@ module Bude {
         if (this.iterations < 0) then throw new Error();
       } catch {
         writeln("Invalid number of iterations");
+        exit(1);
       }
 
       try {
@@ -104,6 +105,7 @@ module Bude {
         if (this.nposes < 0) then throw new Error();
       } catch {
         writeln("Invalid number of poses");
+        exit(1);
       }
 
       try {
@@ -111,6 +113,7 @@ module Bude {
         if (this.wgsize < 0) then throw new Error();
       } catch {
         writeln("Invalid number of blocks");
+        exit(1);
       }
 
       try {
@@ -118,6 +121,7 @@ module Bude {
         if (this.ngpu < 1 || this.ngpu > here.gpus.size) then throw new Error();
       } catch {
         writeln("Invalid number of GPUs (1<=ngpu<=" + here.gpus.size: string + ")");
+        exit(1);
       }
       
       this.deckDir = deckArg.value(); 
