@@ -27,7 +27,7 @@ module Bude {
   const NPPDIST: real(32) = 1.0;
 
   // Configurations
-  config param NUM_TD_PER_THREAD: int = 4; // Work per core
+  config param NUM_TD_PER_THREAD: int(32) = 4; // Work per core
 
   record atom {
     var x, y, z: real(32);
@@ -213,11 +213,11 @@ module Bude {
       var poses = context.poses;
       var buffer: [0..<context.nposes] real(32);
 
-      const iterations = context.iterations;
-      const nposes = context.nposes;
-      const natlig = context.natlig;
-      const natpro = context.natpro;
-      const wgsize = context.wgsize;
+      const iterations: int(32) = context.iterations: int(32);
+      const nposes: int(32) = context.nposes: int(32);
+      const natlig: int(32) = context.natlig: int(32);
+      const natpro: int(32) = context.natpro: int(32);
+      const wgsize: int(32) = context.wgsize: int(32);
 
       const start = timestampMS();
       for itr in 0..<iterations {
