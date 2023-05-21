@@ -17,10 +17,10 @@ echo "" > $out
 for wgsize in ${WG[@]}
 do
   t=$n
-  for s in {1..8}
+  for s in {1..7}
   do
     echo "" >> $out
-    echo ./bude -i $i -n $n -wgsize $wgsize >> $out
+    echo ./bude -i $i -n $n --wgsize $wgsize >> $out
     ./bude -i $i -n $n --wgsize $wgsize >> $out
     echo "####################################################" >> $out
     n=`expr $n \* 2`
