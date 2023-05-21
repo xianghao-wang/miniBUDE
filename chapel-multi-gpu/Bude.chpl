@@ -223,11 +223,11 @@ module Bude {
   proc compute(results: [] real(32)) {
     var times: [0..<context.ngpu] real;
     coforall (gpu, gpuID) in zip(here.gpus, here.gpus.domain) do on gpu {
-      const iterations = context.iterations;
-      const nposes = context.nposes / context.ngpu;
-      const natlig = context.natlig;
-      const natpro = context.natpro;
-      const wgsize = context.wgsize;
+      const iterations = context.iterations: int(32);
+      const nposes = (context.nposes / context.ngpu) : int(32);
+      const natlig = context.natlig: int(32);
+      const natpro = context.natpro: int(32);
+      const wgsize = context.wgsize: int(32);
 
       const protein = context.protein;
       const ligand = context.ligand;
