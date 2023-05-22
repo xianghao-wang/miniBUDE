@@ -18,6 +18,22 @@
 #define HBTYPE_F 70
 #define HBTYPE_E 69
 
+#define CudaSafeCall( err ) __cudaSafeCall( err, __FILE__, __LINE__ )
+
+inline void __cudaSafeCall( cudaError err, const char *file, const int line )
+{
+#ifdef CUDA_ERROR_CHECK
+    if ( cudaSuccess != err )
+    {
+        fprintf( stderr, "cudaSafeCall() failed at %s:%i : %s\n",
+                 file, line, cudaGetErrorString( err ) );
+        exit( -1 );
+    }
+#endif
+
+    return;
+}
+
 // The data structure for one atom - 16 bytes
 
 typedef struct
@@ -50,29 +66,29 @@ void runCUDA(float* results)
   printf("\nRunning CUDA\n");
 
   cudaSetDevice(0);
-  cudaMalloc((void**)&_cuda.d_protein, params.natpro*sizeof(Atom));
+  CudaSafeCall(cudaMalloc((void**)&_cuda.d_protein, params.natpro*sizeof(Atom)));
   cudaDeviceSynchronize();
-  cudaMemcpy(_cuda.d_protein, params.protein, params.natpro*sizeof(Atom), cudaMemcpyHostToDevice);
-  cudaDeviceSynchronize();
-
-  cudaMalloc((void**)&_cuda.d_ligand, params.natlig*sizeof(Atom));
-  cudaDeviceSynchronize();
-  cudaMemcpy(_cuda.d_ligand, params.ligand, params.natlig*sizeof(Atom), cudaMemcpyHostToDevice);
+  CudaSafeCall(cudaMemcpy(_cuda.d_protein, params.protein, params.natpro*sizeof(Atom), cudaMemcpyHostToDevice));
   cudaDeviceSynchronize();
 
-  cudaMalloc((void**)&_cuda.d_forcefield, params.ntypes*sizeof(FFParams));
+  CudaSafeCall(cudaMalloc((void**)&_cuda.d_ligand, params.natlig*sizeof(Atom)));
   cudaDeviceSynchronize();
-  cudaMemcpy(_cuda.d_forcefield, params.forcefield, params.ntypes*sizeof(FFParams), cudaMemcpyHostToDevice);
+  CudaSafeCall(cudaMemcpy(_cuda.d_ligand, params.ligand, params.natlig*sizeof(Atom), cudaMemcpyHostToDevice));
   cudaDeviceSynchronize();
 
-  cudaMalloc((void**)&_cuda.d_results, params.nposes*sizeof(float));
+  CudaSafeCall(cudaMalloc((void**)&_cuda.d_forcefield, params.ntypes*sizeof(FFParams)));
+  cudaDeviceSynchronize();
+  CudaSafeCall(cudaMemcpy(_cuda.d_forcefield, params.forcefield, params.ntypes*sizeof(FFParams), cudaMemcpyHostToDevice));
+  cudaDeviceSynchronize();
+
+  CudaSafeCall(cudaMalloc((void**)&_cuda.d_results, params.nposes*sizeof(float)));
   cudaDeviceSynchronize();
 
   for(int ii = 0; ii < 6; ++ii)
   {
-    cudaMalloc((void**)&_cuda.d_poses[ii], params.nposes*sizeof(float));
+    CudaSafeCall(cudaMalloc((void**)&_cuda.d_poses[ii], params.nposes*sizeof(float)));
     cudaDeviceSynchronize();
-    cudaMemcpy(_cuda.d_poses[ii], params.poses[ii], params.nposes*sizeof(float), cudaMemcpyHostToDevice);
+    CudaSafeCall(cudaMemcpy(_cuda.d_poses[ii], params.poses[ii], params.nposes*sizeof(float), cudaMemcpyHostToDevice));
     cudaDeviceSynchronize();
   }
 
@@ -102,13 +118,14 @@ void runCUDA(float* results)
         _cuda.d_forcefield,
         params.ntypes,
         params.nposes);
+    CudaSafeCall(cudaPeekAtLastError());
   }
 
   cudaDeviceSynchronize();
 
   double end = getTimestamp();
 
-  cudaMemcpy(results, _cuda.d_results, params.nposes*sizeof(float), cudaMemcpyDeviceToHost);
+  CudaSafeCall(cudaMemcpy(results, _cuda.d_results, params.nposes*sizeof(float), cudaMemcpyDeviceToHost));
   cudaDeviceSynchronize();
 
   printTimings(start, end, _cuda.posesPerWI);

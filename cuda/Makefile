@@ -27,10 +27,11 @@ LDFLAGS =
 
 # NV_FLAGS  = -I$(CUDA_PATH)/include -gencode arch=compute_35,code=sm_35 \
 # 			-restrict -Xcompiler "-O3 $(OPTIONS)" -use_fast_math -maxrregcount=62
-NV_FLAGS  = -O3 --ptxas-options="-v" -use_fast_math \
+NV_FLAGS  = -O3 --ptxas-options="-v" -use_fast_math# \
 		-gencode arch=compute_35,code=sm_35 -restrict \
 		-gencode arch=compute_60,code=sm_60 -restrict \
-		-gencode arch=compute_70,code=sm_70 -restrict
+		-gencode arch=compute_70,code=sm_70 -restrict \
+		-gencode arch=compute_80,code=sm_80 -restrict
 
 HIP_FLAGS = -O3
 
@@ -44,6 +45,10 @@ LINK = $(CC)
 
 # On V100, -DUSE_SHARED introduces correctness issues, -maxrregcount lower performance
 LDFLAGS += -L$(CUDA_PATH)/lib64 -lcudart
+endif
+
+ifdef DEBUG
+  NV_FLAGS += -DCUDA_ERROR_CHECK
 endif
 
 bude: Makefile $(OBJ)
