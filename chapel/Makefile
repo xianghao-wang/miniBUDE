@@ -5,8 +5,9 @@ MAKEFLAGS += --warn-undefined-variables --no-builtin-rules
 
 # -------
 
+WGSIZE = 4
 OPTIONS = 
-CHPL_FLAGS = --fast --no-ieee-float $(OPTIONS)
+CHPL_FLAGS = --fast --no-ieee-float $(OPTIONS) -s NUM_TD_PER_THREAD=$(WGSIZE)
 CHPL = chpl
 
 # -------
