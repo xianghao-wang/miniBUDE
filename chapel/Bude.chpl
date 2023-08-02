@@ -88,8 +88,8 @@ module Bude {
         , defaultValue=DEFAULT_WGSIZE: string
         , valueName="W"
         , help="Set the number of blocks to W (default: " + DEFAULT_WGSIZE: string + ")");
-      var onHostArg = parser.addFlag(name="on_host"
-        , opts=["--on_host"]
+      var onHostArg = parser.addFlag(name="host"
+        , opts=["--host"]
         , defaultValue=false
         , valueName="OH"
         , help="Execute the program on host (default: on GPU)");
