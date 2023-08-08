@@ -5,7 +5,6 @@ module Bude {
   use CTypes;
   use ArgumentParser;
   use Path;
-  use Math;
 
   // Program context parameters
   param DEFAULT_ITERS = 8;
@@ -48,16 +47,13 @@ module Bude {
     var iterations: int;
     var natlig, natpro, ntypes, nposes: int;
     var wgsize: int;
-    // var ngpu: int;
-    var onHost: bool;
+    var ngpu: int;
 
     var proteinDomain: domain(1);
     var ligandDomain: domain(1);
     var forcefieldDomain: domain(1);
     var posesDomain: domain(2);
-    var deviceDomain: domain(1);
 
-    var devices: [deviceDomain] locale;
     var protein: [proteinDomain] atom; 
     var ligand: [ligandDomain] atom;
     var forcefield: [forcefieldDomain] ffParams;
@@ -88,12 +84,6 @@ module Bude {
         , defaultValue=DEFAULT_WGSIZE: string
         , valueName="W"
         , help="Set the number of blocks to W (default: " + DEFAULT_WGSIZE: string + ")");
-      var onHostArg = parser.addFlag(name="host"
-        , opts=["--host"]
-        , defaultValue=false
-        , valueName="OH"
-        , help="Execute the program on host (default: on GPU)");
-      
       var ngpuArg = parser.addOption(name="ngpu"
         , opts=["--ngpu"]
         , defaultValue=DEFAULT_NGPU: string
@@ -126,24 +116,12 @@ module Bude {
         exit(1);
       }
 
-      this.onHost = onHostArg.valueAsBool();
-
-      if (!this.onHost) {
-        try {
-          const ngpu = ngpuArg.value(): int;
-          if (ngpu < 1 || ngpu > here.gpus.size) then throw new Error();
-          this.deviceDomain = {0 ..< ngpu};
-          // Add gpu to devices
-          for i in this.deviceDomain {
-            this.devices[i] = here.gpus[i];
-          }
-        } catch {
-          writeln("Invalid number of GPUs (1<=ngpu<=" + here.gpus.size: string + ")");
-          exit(1);
-        }
-      } else {
-        this.deviceDomain = {0 ..< 1};
-        this.devices[0] = here;
+      try {
+        this.ngpu = ngpuArg.value(): int;
+        if (this.ngpu < 1 || this.ngpu > here.gpus.size) then throw new Error();
+      } catch {
+        writeln("Invalid number of GPUs (1<=ngpu<=" + here.gpus.size: string + ")");
+        exit(1);
       }
       
       this.deckDir = deckArg.value(); 
@@ -151,7 +129,7 @@ module Bude {
       // Load data
       var length: int;
       var aFile: file;
-      var reader: fileReader(?);
+      var reader: fileReader();
       
       // Read ligand
       aFile = openFile(this.deckDir + FILE_LIGAND, length);
@@ -243,10 +221,10 @@ module Bude {
   }
 
   proc compute(results: [] real(32)) {
-    var times: [0..<context.devices.size] real;
-    coforall (device, deviceID) in zip(context.devices, context.devices.domain) do on device {
+    var times: [0..<context.ngpu] real;
+    coforall (gpu, gpuID) in zip(here.gpus, here.gpus.domain) do on gpu {
       const iterations = context.iterations: int(32);
-      const nposes = (context.nposes / context.devices.size) : int(32);
+      const nposes = (context.nposes / context.ngpu) : int(32);
       const natlig = context.natlig: int(32);
       const natpro = context.natpro: int(32);
       const wgsize = context.wgsize: int(32);
@@ -254,14 +232,12 @@ module Bude {
       const protein = context.protein;
       const ligand = context.ligand;
       const forcefield = context.forcefield;
-      const poses: [{0..<6, 0..<nposes}] real(32) = context.poses[{0..<6, deviceID*nposes..<(deviceID+1)*nposes}];
+      const poses: [{0..<6, 0..<nposes}] real(32) = context.poses[{0..<6, gpuID*nposes..<(gpuID+1)*nposes}];
       var buffer: [0..<nposes] real(32);
 
-      const batchSize: int(32) = if context.onHost then wgsize else NUM_TD_PER_THREAD;
-
-      times[deviceID] = timestampMS();
+      times[gpuID] = timestampMS();
       for i in 0..<iterations {
-        forall ii in 0..<nposes/NUM_TD_PER_THREAD {
+        foreach ii in 0..<nposes/NUM_TD_PER_THREAD {
           __primitive("gpu set blockSize", wgsize);
           const ind = ii * NUM_TD_PER_THREAD;
           var etot: NUM_TD_PER_THREAD * real(32);
@@ -403,9 +379,9 @@ module Bude {
             buffer[ind+jj] = etot[jj] * 0.5;
           }
         } // foreach ii in 0..<context.nposes/NUM_TD_PER_THREAD
-        results[deviceID*nposes..<(deviceID+1)*nposes] = buffer;
+        results[gpuID*nposes..<(gpuID+1)*nposes] = buffer;
       } // for iter in 0..<iterations
-      times[deviceID] = timestampMS() - times[deviceID];
+      times[gpuID] = timestampMS() - times[gpuID];
     }
 
     printTimings(max reduce times);
