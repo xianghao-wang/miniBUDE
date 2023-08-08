@@ -31,7 +31,7 @@ module Bude {
   const NPPDIST: real(32) = 1.0;
 
   // Configurations
-  config param NUM_TD_PER_THREAD: int = 4; // Work per core
+  config param NUM_TD_PER_THREAD: int(32) = 4; // Work per core
 
   record atom {
     var x, y, z: real(32);
@@ -47,15 +47,15 @@ module Bude {
 
   class params {
     var deckDir: string;
-    var iterations: int;
-    var natlig, natpro, ntypes, nposes: int;
+    var iterations: int(32);
+    var natlig, natpro, ntypes, nposes: int(32);
     var wgsize: int;
     var ngpu: int;
 
-    var proteinDomain: domain(1);
-    var ligandDomain: domain(1);
-    var forcefieldDomain: domain(1);
-    var posesDomain: domain(2);
+    var proteinDomain: domain(1,int(32));
+    var ligandDomain: domain(1,int(32));
+    var forcefieldDomain: domain(1,int(32));
+    var posesDomain: domain(2,int(32));
 
     var protein: [proteinDomain] atom; 
     var ligand: [ligandDomain] atom;
@@ -96,7 +96,7 @@ module Bude {
 
       // Store these parameters
       try {
-        this.iterations = iterationsArg.value(): int;
+        this.iterations = iterationsArg.value(): int(32);
         if (this.iterations < 0) then throw new Error();
       } catch {
         writeln("Invalid number of iterations");
@@ -104,7 +104,7 @@ module Bude {
       }
 
       try {
-        this.nposes = numposesArg.value(): int;
+        this.nposes = numposesArg.value(): int(32);
         if (this.nposes < 0) then throw new Error();
       } catch {
         writeln("Invalid number of poses");
@@ -139,7 +139,7 @@ module Bude {
       
       // Read ligand
       aFile = openFile(this.deckDir + FILE_LIGAND, length);
-      this.natlig = length / c_sizeof(atom): int;
+      this.natlig = (length / c_sizeof(atom)): int(32);
       this.ligandDomain = {0..<this.natlig};
       reader = aFile.reader(kind=iokind.native, region=0..);
       reader.read(this.ligand);
@@ -147,7 +147,7 @@ module Bude {
 
       // Read protein
       aFile = openFile(this.deckDir + FILE_PROTEIN, length);
-      this.natpro = length / c_sizeof(atom): int;
+      this.natpro = (length / c_sizeof(atom)): int(32);
       this.proteinDomain = {0..<this.natpro};
       reader = aFile.reader(kind=iokind.native, region=0..);
       reader.read(this.protein);
@@ -155,23 +155,23 @@ module Bude {
 
       // Read force field
       aFile = openFile(this.deckDir + FILE_FORCEFIELD, length);
-      this.ntypes = length / c_sizeof(ffParams): int;
+      this.ntypes = (length / c_sizeof(ffParams)): int(32);
       this.forcefieldDomain = {0..<this.ntypes};
       reader = aFile.reader(kind=iokind.native, region=0..);
       reader.read(this.forcefield);
       reader.close(); aFile.close();
 
       // Read poses
-      this.posesDomain = {0..<6, 0..<this.nposes};
+      this.posesDomain = {0..<6:int(32), 0..<this.nposes};
       aFile = openFile(this.deckDir + FILE_POSES, length);
       reader = aFile.reader(kind=iokind.native, region=0.., locking=false);
-      var available = length / (6 * c_sizeof(real(32)): int);
-      var current = 0;
+      var available = (length / (6 * c_sizeof(real(32)): int)): int(32);
+      var current = 0:int(32);
       while (current < this.nposes) {
         var fetch = this.nposes - current;
         if (fetch > available) then fetch = available;
 
-        for i in 0..<6 {
+        for i in posesDomain.dim(0) {
           const base = i*available*c_sizeof(real(32)):int;
           const amount = fetch*c_sizeof(real(32)):int;
           reader.seek(region=base..base+amount);

@@ -14,7 +14,7 @@ module GKernel {
       const protein = context.protein;
       const ligand = context.ligand;
       const forcefield = context.forcefield;
-      const poses: [{0..<6, 0..<nposes}] real(32) = context.poses[{0..<6, gpuID*nposes..<(gpuID+1)*nposes}];
+      const poses: [0..<6:int(32), 0..<nposes] real(32) = context.poses[.., gpuID*nposes..<(gpuID+1)*nposes];
       var buffer: [0..<nposes] real(32);
 
       times[gpuID] = timestampMS();
