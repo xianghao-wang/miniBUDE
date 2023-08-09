@@ -3,10 +3,11 @@ module GKernel {
   use Math;
 
   proc gkernel(context: params, results: [] real(32)) {
-    var times: [0..<context.ngpu] real;
+    const ngpu = here.gpus.size;
+    var times: [0..<ngpu] real;
     coforall (gpu, gpuID) in zip(here.gpus, here.gpus.domain) do on gpu {
       const iterations = context.iterations: int(32);
-      const nposes = (context.nposes / context.ngpu) : int(32);
+      const nposes = (context.nposes / ngpu) : int(32);
       const natlig = context.natlig: int(32);
       const natpro = context.natpro: int(32);
       const wgsize = context.wgsize: int(32);
