@@ -13,7 +13,7 @@ module Bude {
   param DEFAULT_ITERS = 8;
   param DEFAULT_NPOSES = 65536;
   param DEFAULT_WGSIZE = 64;
-  param DEFAULT_NGPU = 2;
+  param DEFAULT_NGPU = 1;
   param REF_NPOSES = 65536;
   param DATA_DIR = "../data/bm1";
   param FILE_LIGAND = "/ligand.in";
@@ -32,6 +32,8 @@ module Bude {
 
   // Configurations
   config param NUM_TD_PER_THREAD: int = 4; // Work per core
+
+  extern proc getenv(name : c_string) : c_string;
 
   record atom {
     var x, y, z: real(32);
@@ -87,11 +89,11 @@ module Bude {
         , defaultValue=DEFAULT_WGSIZE: string
         , valueName="W"
         , help="Set the number of blocks to W (default: " + DEFAULT_WGSIZE: string + ")");
-      var ngpuArg = parser.addOption(name="ngpu"
-        , opts=["--ngpu"]
-        , defaultValue=DEFAULT_NGPU: string
-        , valueName="NG"
-        , help="Set the number of GPUs (default: " + DEFAULT_NGPU: string + ")");
+      // var ngpuArg = parser.addOption(name="ngpu"
+      //   , opts=["--ngpu"]
+      //   , defaultValue=DEFAULT_NGPU: string
+      //   , valueName="NG"
+      //   , help="Set the number of GPUs (default: " + DEFAULT_NGPU: string + ")");
       parser.parseArgs(args);
 
       // Store these parameters
@@ -121,12 +123,18 @@ module Bude {
 
       if (CHPL_GPU == "nvidia")
       {
+        // try {
+        //   this.ngpu = ngpuArg.value(): int;
+        //   if (this.ngpu < 1 || this.ngpu > here.gpus.size) then throw new Error();
+        // } catch {
+        //   writeln("Invalid number of GPUs (1<=ngpu<=" + here.gpus.size: string + ")");
+        //   exit(1);
+        // }
+
         try {
-          this.ngpu = ngpuArg.value(): int;
-          if (this.ngpu < 1 || this.ngpu > here.gpus.size) then throw new Error();
+          this.ngpu = (getenv('PATH'.c_str()):string):int;
         } catch {
-          writeln("Invalid number of GPUs (1<=ngpu<=" + here.gpus.size: string + ")");
-          exit(1);
+          this.ngpu = DEFAULT_NGPU;
         }
       }
       
