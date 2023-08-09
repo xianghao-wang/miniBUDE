@@ -45,7 +45,7 @@ module CKernel {
     forcefield: [] ffParams,
     group: int(32)) {
 
-    var transform: [0..<3, 0..<4, 0..<NUM_TD_PER_THREAD] real(32) = noinit;
+    var transform: [0..<3:int(32), 0..<4:int(32), 0..<NUM_TD_PER_THREAD] real(32) = noinit;
     var etot: [0..<NUM_TD_PER_THREAD] real(32) = noinit;
 
     // Compute transformation matrix
