@@ -208,7 +208,7 @@ module Bude {
   } // main
 
   proc compute(results: [] real(32)) {
-    if (CHPL_GPU == "nvidia") {
+    if (CHPL_GPU == "nvidia" || CHPL_GPU == "amd") {
       writeln("\nRunning Chapel on ", here.gpus.size, (if here.gpus.size > 1 then " GPUs" else " GPU"));
       gpukernel(context, results);
     } else if (CHPL_GPU == "none") {
