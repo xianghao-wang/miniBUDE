@@ -30,7 +30,7 @@ module Bude {
   const NPPDIST: real(32) = 1.0;
 
   // Configurations
-  config param NUM_TD_PER_THREAD: int(32) = 4; // Work per core
+  config param NUM_TD_PER_THREAD: int = 4; // Work per core
 
   record atom {
     var x, y, z: real(32);
